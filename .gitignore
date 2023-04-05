@@ -16,6 +16,10 @@ libs
 *.class
 *.log
 
+# IntelliJ
+djl.ipr
+djl.iws
+
 # Eclipse
 .settings
 .project

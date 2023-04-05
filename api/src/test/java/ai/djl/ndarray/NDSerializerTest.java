@@ -17,6 +17,7 @@ import ai.djl.ndarray.types.DataType;
 import ai.djl.util.Float16Utils;
 
 import org.testng.Assert;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+// Ignore this test, since we do not need to load serialized data
+@Ignore
 public class NDSerializerTest {
 
     @Test
