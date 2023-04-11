@@ -43,7 +43,8 @@ public class NDScopeTest {
             }
 
             Assert.assertFalse(inside.isReleased());
-            // Tensorflow engine sets manager.close() = null thus throwing NPE. Pytorch engine throws IllegalStateException instead.
+            // Tensorflow engine sets manager.close() = null thus throwing NPE. Pytorch engine
+            // throws IllegalStateException instead.
             Assert.assertThrows(NullPointerException.class, () -> released.addi(1));
         }
         Assert.assertTrue(inside.isReleased());
