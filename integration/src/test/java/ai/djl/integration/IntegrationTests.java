@@ -31,19 +31,11 @@ public class IntegrationTests {
         String[] engines;
         String defaultEngine = System.getProperty("ai.djl.default_engine");
         if (defaultEngine == null) {
-            // TODO: windows CPU build is having OOM issue if 3 engines are loaded and running tests
-            // together
-            if (System.getProperty("os.name").startsWith("Win")) {
-                engines = new String[] {"MXNet"};
-            } else if ("aarch64".equals(System.getProperty("os.arch"))) {
-                engines = new String[] {"PyTorch"};
-            } else {
-                engines =
-                        new String[] {
-                            "MXNet", "PyTorch", "TensorFlow", "OnnxRuntime", "XGBoost", "LightGBM"
-                        };
-            }
+            engines = new String[] {"TensorFlow"};
         } else {
+            if (!"TensorFlow".equalsIgnoreCase(defaultEngine)) {
+                throw new UnsupportedOperationException("Only Tensorflow engine supported.");
+            }
             engines = new String[] {defaultEngine};
         }
 
