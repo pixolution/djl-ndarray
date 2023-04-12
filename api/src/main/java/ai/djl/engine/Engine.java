@@ -20,7 +20,6 @@ import ai.djl.training.GradientCollector;
 import ai.djl.training.LocalParameterServer;
 import ai.djl.training.ParameterServer;
 import ai.djl.training.optimizer.Optimizer;
-import ai.djl.util.Ec2Utils;
 import ai.djl.util.RandomUtils;
 import ai.djl.util.Utils;
 import ai.djl.util.cuda.CudaUtils;
@@ -90,7 +89,6 @@ public abstract class Engine {
             throw new EngineException("Unknown default engine: " + defaultEngine);
         }
         logger.debug("Found default engine: {}", defaultEngine);
-        Ec2Utils.callHome(defaultEngine);
         return defaultEngine;
     }
 
