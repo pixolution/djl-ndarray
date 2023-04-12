@@ -444,7 +444,9 @@ public final class JavacppUtils {
         if (intraop != null) {
             configBuilder.setIntraOpParallelismThreads(intraop);
         }
-        int gpuCount = CudaUtils.getGpuCount();
+        // We do not support GPU but only CPU
+        //int gpuCount = CudaUtils.getGpuCount();
+        int gpuCount = 0;
         if (gpuCount > 0) {
             StringBuilder sb = new StringBuilder("0");
             for (int i = 1; i < gpuCount; ++i) {
