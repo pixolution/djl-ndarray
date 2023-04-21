@@ -12,12 +12,10 @@
  */
 package ai.djl.training.listener;
 
-import ai.djl.Device;
 import ai.djl.metric.Metric;
 import ai.djl.metric.Metrics;
 import ai.djl.metric.Unit;
 import ai.djl.training.Trainer;
-import ai.djl.util.cuda.CudaUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,15 +104,6 @@ public class MemoryTrainingListener extends TrainingListenerAdapter {
 
             metrics.addMetric("Heap", heapUsed, Unit.BYTES);
             metrics.addMetric("NonHeap", nonHeapUsed, Unit.BYTES);
-            int gpuCount = CudaUtils.getGpuCount();
-
-            // CudaUtils.getGpuMemory() will allocates memory on GPUs if CUDA runtime is not
-            // initialized.
-            for (int i = 0; i < gpuCount; ++i) {
-                Device device = Device.gpu(i);
-                MemoryUsage mem = CudaUtils.getGpuMemory(device);
-                metrics.addMetric("GPU-" + i, mem.getCommitted(), Unit.BYTES);
-            }
         }
     }
 
@@ -141,10 +130,7 @@ public class MemoryTrainingListener extends TrainingListenerAdapter {
                 list.addAll(metrics.getMetric("NonHeap"));
                 list.addAll(metrics.getMetric("cpu"));
                 list.addAll(metrics.getMetric("rss"));
-                int gpuCount = CudaUtils.getGpuCount();
-                for (int i = 0; i < gpuCount; ++i) {
-                    list.addAll(metrics.getMetric("GPU-" + i));
-                }
+
                 for (Metric metric : list) {
                     writer.append(metric.toString());
                     writer.newLine();

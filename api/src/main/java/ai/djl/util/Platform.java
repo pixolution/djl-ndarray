@@ -12,7 +12,6 @@
  */
 package ai.djl.util;
 
-import ai.djl.util.cuda.CudaUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -185,12 +184,9 @@ public final class Platform {
         if ("amd64".equals(platform.osArch)) {
             platform.osArch = "x86_64";
         }
-        if (CudaUtils.getGpuCount() > 0) {
-            platform.flavor = "cu" + CudaUtils.getCudaVersionString();
-            platform.cudaArch = CudaUtils.getComputeCapability(0);
-        } else {
-            platform.flavor = "cpu";
-        }
+
+        platform.flavor = "cpu";
+
         return platform;
     }
 

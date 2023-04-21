@@ -20,7 +20,6 @@ import ai.djl.ndarray.types.Shape;
 import ai.djl.tensorflow.engine.SavedModelBundle;
 import ai.djl.tensorflow.engine.TfDataType;
 import ai.djl.util.Pair;
-import ai.djl.util.cuda.CudaUtils;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
