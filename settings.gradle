@@ -1,4 +1,4 @@
-rootProject.name = 'djl'
+rootProject.name = 'djl-ndarray'
 include ':api'
 include ':basicdataset'
 include ':djl-zero'
