@@ -3,9 +3,6 @@ def projects = [
         project(':engines:tensorflow:tensorflow-api'),
         project(':engines:tensorflow:tensorflow-engine'),
 ]
-if (JavaVersion.current() < JavaVersion.VERSION_21) {
-    projects.add(project(':extensions:spark'))
-}
 
 configure(projects) {
     apply plugin: "maven-publish"

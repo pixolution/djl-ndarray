@@ -12,7 +12,6 @@ dependencies {
     implementation project(":extensions:audio")
 
     runtimeOnly project(":engines:pytorch:pytorch-model-zoo")
-    runtimeOnly project(":engines:tensorflow:tensorflow-model-zoo")
     runtimeOnly project(":engines:mxnet:mxnet-model-zoo")
     runtimeOnly project(":engines:onnxruntime:onnxruntime-engine")
 

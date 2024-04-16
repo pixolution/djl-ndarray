@@ -10,7 +10,6 @@ dependencies {
         exclude group: "junit", module: "junit"
     }
     testImplementation "org.slf4j:slf4j-simple:${slf4j_version}"
-    testRuntimeOnly project(":engines:tensorflow:tensorflow-model-zoo")
     testRuntimeOnly project(":engines:tensorflow:tensorflow-engine")
 }
 
