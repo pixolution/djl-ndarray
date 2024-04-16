@@ -20,7 +20,6 @@ import ai.djl.ndarray.types.Shape;
 import ai.djl.tensorflow.engine.SavedModelBundle;
 import ai.djl.tensorflow.engine.TfDataType;
 import ai.djl.util.Pair;
-import ai.djl.util.cuda.CudaUtils;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -444,7 +443,9 @@ public final class JavacppUtils {
         if (intraop != null) {
             configBuilder.setIntraOpParallelismThreads(intraop);
         }
-        int gpuCount = CudaUtils.getGpuCount();
+        // We do not support GPU but only CPU
+        //int gpuCount = CudaUtils.getGpuCount();
+        int gpuCount = 0;
         if (gpuCount > 0) {
             StringBuilder sb = new StringBuilder("0");
             for (int i = 1; i < gpuCount; ++i) {

@@ -3,6 +3,8 @@ group "ai.djl.tensorflow"
 dependencies {
     api project(":api")
     api project(":engines:tensorflow:tensorflow-api")
+    // Add official Tensorflow Java bindings, since we removed DJL automatic downloading.
+    api group: 'org.tensorflow', name: 'tensorflow-core-platform', version: '0.5.0'
 
     testImplementation(project(":testing"))
     testImplementation "org.slf4j:slf4j-simple:${slf4j_version}"

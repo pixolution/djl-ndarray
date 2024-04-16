@@ -13,7 +13,6 @@
 package ai.djl.integration;
 
 import ai.djl.integration.util.TestUtils;
-import ai.djl.util.cuda.CudaUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,19 +30,11 @@ public class IntegrationTests {
         String[] engines;
         String defaultEngine = System.getProperty("ai.djl.default_engine");
         if (defaultEngine == null) {
-            // TODO: windows CPU build is having OOM issue if 3 engines are loaded and running tests
-            // together
-            if (System.getProperty("os.name").startsWith("Win")) {
-                engines = new String[] {"MXNet"};
-            } else if ("aarch64".equals(System.getProperty("os.arch"))) {
-                engines = new String[] {"PyTorch"};
-            } else {
-                engines =
-                        new String[] {
-                            "MXNet", "PyTorch", "TensorFlow", "OnnxRuntime", "XGBoost", "LightGBM"
-                        };
-            }
+            engines = new String[] {"TensorFlow"};
         } else {
+            if (!"TensorFlow".equalsIgnoreCase(defaultEngine)) {
+                throw new UnsupportedOperationException("Only Tensorflow engine supported.");
+            }
             engines = new String[] {defaultEngine};
         }
 
@@ -51,12 +42,6 @@ public class IntegrationTests {
             TestUtils.setEngine(engine);
             logger.info("Testing engine: {} ...", engine);
             Assert.assertTrue(new IntegrationTest(IntegrationTest.class).runTests(args));
-            // currently each engine will reserve a certain amount of memory and hold it until
-            // process terminate so running 3 different engines sequentially without
-            // calling System.exit() causes OOM issue. For GPU env, only defaultEngine is run
-            if (CudaUtils.hasCuda()) {
-                break;
-            }
         }
     }
 }

@@ -6,23 +6,10 @@ plugins {
 dependencies {
     implementation "commons-cli:commons-cli:${commons_cli_version}"
     implementation "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_slf4j_version}"
-    implementation project(":basicdataset")
-    implementation project(":model-zoo")
     implementation project(":testing")
 
-    runtimeOnly project(":engines:mxnet:mxnet-model-zoo")
-    runtimeOnly project(":engines:pytorch:pytorch-model-zoo")
-    runtimeOnly project(":engines:pytorch:pytorch-jni")
-    runtimeOnly project(":engines:tensorflow:tensorflow-model-zoo")
-    runtimeOnly project(":engines:ml:xgboost")
-    runtimeOnly project(":engines:ml:lightgbm")
-    runtimeOnly project(":engines:onnxruntime:onnxruntime-engine")
 
-    if (System.getProperty("ai.djl.default_engine") == "TFLite") {
-        runtimeOnly project(":engines:tflite:tflite-engine")
-    } else if (System.getProperty("ai.djl.default_engine") == "PaddlePaddle") {
-        runtimeOnly project(":engines:paddlepaddle:paddlepaddle-model-zoo")
-    }
+    runtimeOnly project(":engines:tensorflow:tensorflow-engine")
 }
 
 java {

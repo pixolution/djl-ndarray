@@ -20,17 +20,14 @@ import ai.djl.training.GradientCollector;
 import ai.djl.training.LocalParameterServer;
 import ai.djl.training.ParameterServer;
 import ai.djl.training.optimizer.Optimizer;
-import ai.djl.util.Ec2Utils;
 import ai.djl.util.RandomUtils;
 import ai.djl.util.Utils;
-import ai.djl.util.cuda.CudaUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.MemoryUsage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -93,7 +90,6 @@ public abstract class Engine {
             throw new EngineException("Unknown default engine: " + defaultEngine);
         }
         logger.debug("Found default engine: {}", defaultEngine);
-        Ec2Utils.callHome(defaultEngine);
         return defaultEngine;
     }
 
@@ -212,11 +208,7 @@ public abstract class Engine {
      */
     public Device defaultDevice() {
         if (defaultDevice == null) {
-            if (hasCapability(StandardCapabilities.CUDA) && CudaUtils.getGpuCount() > 0) {
-                defaultDevice = Device.gpu();
-            } else {
-                defaultDevice = Device.cpu();
-            }
+            defaultDevice = Device.cpu();
         }
         return defaultDevice;
     }
@@ -263,9 +255,6 @@ public abstract class Engine {
      * @return the number of GPUs available in the system
      */
     public int getGpuCount() {
-        if (hasCapability(StandardCapabilities.CUDA)) {
-            return CudaUtils.getGpuCount();
-        }
         return 0;
     }
 
@@ -402,19 +391,6 @@ public abstract class Engine {
             e.printStackTrace(System.out);
         }
 
-        System.out.println();
-        System.out.println("------------------ CUDA -----------------");
-        int gpuCount = CudaUtils.getGpuCount();
-        System.out.println("GPU Count: " + gpuCount);
-        if (gpuCount > 0) {
-            System.out.println("CUDA: " + CudaUtils.getCudaVersionString());
-            System.out.println("ARCH: " + CudaUtils.getComputeCapability(0));
-        }
-        for (int i = 0; i < gpuCount; ++i) {
-            Device device = Device.gpu(i);
-            MemoryUsage mem = CudaUtils.getGpuMemory(device);
-            System.out.println("GPU(" + i + ") memory used: " + mem.getCommitted() + " bytes");
-        }
 
         System.out.println();
         System.out.println("----------------- Engines ---------------");

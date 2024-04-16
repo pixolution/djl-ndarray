@@ -12,7 +12,6 @@
  */
 package ai.djl.util;
 
-import ai.djl.util.cuda.CudaUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -194,12 +193,9 @@ public final class Platform {
         if ("amd64".equals(platform.osArch)) {
             platform.osArch = "x86_64";
         }
-        if (CudaUtils.getGpuCount() > 0) {
-            platform.flavor = "cu" + CudaUtils.getCudaVersionString();
-            platform.cudaArch = CudaUtils.getComputeCapability(0);
-        } else {
-            platform.flavor = "cpu";
-        }
+
+        platform.flavor = "cpu";
+
         return platform;
     }
 

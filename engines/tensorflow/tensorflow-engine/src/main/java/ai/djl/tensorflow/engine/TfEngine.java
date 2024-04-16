@@ -50,7 +50,8 @@ public final class TfEngine extends Engine implements AutoCloseable {
 
     static TfEngine newInstance() {
         try {
-            LibUtils.loadLibrary();
+            // devicePlacementPolicy=2: Silently copy the tensor, which has a performance cost since the operation
+            // will be blocked till the copy completes. This is the default placement policy.
             eagerSessionHandle =
                     new AtomicReference<>(
                             JavacppUtils.createEagerSession(
