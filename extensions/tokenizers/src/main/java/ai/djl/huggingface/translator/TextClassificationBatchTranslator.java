@@ -32,12 +32,19 @@ public class TextClassificationBatchTranslator
         implements NoBatchifyTranslator<String[], Classifications[]> {
 
     private HuggingFaceTokenizer tokenizer;
+    private boolean includeTokenTypes;
     private Batchifier batchifier;
     private PretrainedConfig config;
 
-    TextClassificationBatchTranslator(HuggingFaceTokenizer tokenizer, Batchifier batchifier) {
+    TextClassificationBatchTranslator(
+            HuggingFaceTokenizer tokenizer,
+            boolean includeTokenTypes,
+            Batchifier batchifier,
+            PretrainedConfig config) {
         this.tokenizer = tokenizer;
+        this.includeTokenTypes = includeTokenTypes;
         this.batchifier = batchifier;
+        this.config = config;
     }
 
     /** {@inheritDoc} */
@@ -56,7 +63,7 @@ public class TextClassificationBatchTranslator
         Encoding[] encodings = tokenizer.batchEncode(inputs);
         NDList[] batch = new NDList[encodings.length];
         for (int i = 0; i < encodings.length; ++i) {
-            batch[i] = encodings[i].toNDList(manager, false);
+            batch[i] = encodings[i].toNDList(manager, includeTokenTypes);
         }
         return batchifier.batchify(batch);
     }

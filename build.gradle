@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.spotbugs" version "4.7.1" apply false
+    id "com.github.spotbugs" version "5.1.3" apply false
 }
 
 defaultTasks 'build'
@@ -44,6 +44,7 @@ configure(javaProjects()) {
         targetCompatibility = JavaVersion.VERSION_11
         options.compilerArgs << "-proc:none" << "-Xlint:all,-options,-static,-removal" << "-Werror"
     }
+    javadoc.options.addStringOption("Xdoclint:none", "-quiet")
 
     apply plugin: 'eclipse'
 
@@ -88,7 +89,7 @@ configure(javaProjects()) {
             systemProperty "disableProgressBar", "true"
             systemProperty "nightly", System.getProperty("nightly", "false")
             if (gradle.startParameter.offline) {
-                systemProperty "offline", "true"
+                systemProperty "ai.djl.offline", "true"
             }
             // This is used to avoid overriding on default engine for modules:
             // mxnet-engine, mxnet-model-zoo, api (MockEngine), basicdataset, fasttext, etc

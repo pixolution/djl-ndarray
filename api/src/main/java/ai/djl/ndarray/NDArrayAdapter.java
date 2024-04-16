@@ -20,6 +20,7 @@ import ai.djl.ndarray.types.Shape;
 import ai.djl.ndarray.types.SparseFormat;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -145,7 +146,10 @@ public abstract class NDArrayAdapter implements NDArray {
             }
             return this;
         }
-        throw new UnsupportedOperationException(UNSUPPORTED_MSG);
+        NDArray array = getManager().create(getShape(), getDataType(), device);
+        array.setName(getName());
+        copyTo(array);
+        return array;
     }
 
     /** {@inheritDoc} */
@@ -157,8 +161,48 @@ public abstract class NDArrayAdapter implements NDArray {
             }
             return this;
         }
-        // TODO: each engine should override this method
-        throw new UnsupportedOperationException(UNSUPPORTED_MSG);
+        Number[] numbers = toArray();
+        ByteBuffer bb = toTypeInternal(numbers, dataType);
+        NDArray array = manager.create(bb, getShape(), dataType);
+        array.setName(getName());
+        return array;
+    }
+
+    private ByteBuffer toTypeInternal(Number[] numbers, DataType dataType) {
+        int size = dataType.getNumOfBytes() * numbers.length;
+        ByteBuffer bb = manager.allocateDirect(size);
+        for (Number number : numbers) {
+            switch (dataType) {
+                case FLOAT16:
+                case FLOAT32:
+                    bb.putFloat(number.floatValue());
+                    break;
+                case FLOAT64:
+                    bb.putDouble(number.doubleValue());
+                    break;
+                case INT16:
+                case UINT16:
+                    bb.putShort(number.shortValue());
+                    break;
+                case INT32:
+                case UINT32:
+                    bb.putInt(number.intValue());
+                    break;
+                case INT64:
+                case UINT64:
+                    bb.putLong(number.longValue());
+                    break;
+                case BOOLEAN:
+                case INT8:
+                case UINT8:
+                    bb.put(number.byteValue());
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported DataType: " + getDataType());
+            }
+        }
+        bb.rewind();
+        return bb;
     }
 
     /** {@inheritDoc} */
@@ -684,6 +728,12 @@ public abstract class NDArrayAdapter implements NDArray {
 
     /** {@inheritDoc} */
     @Override
+    public NDArray atan2(NDArray other) {
+        return getAlternativeArray().atan2(other);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public NDArray sinh() {
         return getAlternativeArray().sinh();
     }
@@ -859,6 +909,18 @@ public abstract class NDArrayAdapter implements NDArray {
             NDArray window,
             boolean normalize,
             boolean returnComplex) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray fft2(long[] sizes, long[] axes) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray ifft2(long[] sizes, long[] axes) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -1080,6 +1142,12 @@ public abstract class NDArrayAdapter implements NDArray {
 
     /** {@inheritDoc} */
     @Override
+    public NDList topK(int k, int axis, boolean largest, boolean sorted) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public NDArray argMin() {
         return getAlternativeArray().argMin();
     }
@@ -1136,6 +1204,12 @@ public abstract class NDArrayAdapter implements NDArray {
     @Override
     public NDArray erfinv() {
         return getAlternativeArray().erfinv();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray erf() {
+        return getAlternativeArray().erf();
     }
 
     /** {@inheritDoc} */

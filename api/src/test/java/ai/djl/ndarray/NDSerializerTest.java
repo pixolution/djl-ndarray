@@ -100,6 +100,23 @@ public class NDSerializerTest {
         }
     }
 
+    @Test
+    public void testStringTensor() {
+        try (NDManager manager = NDManager.newBaseManager("PyTorch")) {
+            NDArray array = manager.create("hello");
+            byte[] buf = array.encode();
+            NDArray decoded = NDArray.decode(manager, buf);
+            Assert.assertTrue(decoded.getShape().isScalar());
+
+            array = manager.create(new String[] {"hello", "world"});
+            buf = array.encode();
+            decoded = NDArray.decode(manager, buf);
+            Assert.assertEquals(decoded.getShape(), array.getShape());
+            Assert.assertEquals(decoded.toStringArray()[1], "world");
+            Assert.assertEquals(decoded, array);
+        }
+    }
+
     private static byte[] encode(NDArray array) throws IOException {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             NDSerializer.encodeAsNumpy(array, bos);
@@ -110,7 +127,7 @@ public class NDSerializerTest {
 
     private static NDArray decode(NDManager manager, byte[] data) throws IOException {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(data)) {
-            return NDSerializer.decodeNumpy(manager, bis);
+            return NDList.decode(manager, bis).get(0);
         }
     }
 

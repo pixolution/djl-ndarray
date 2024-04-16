@@ -18,8 +18,6 @@ import ai.djl.engine.EngineProvider;
 /** {@code LgbmEngineProvider} is the LightGBM implementation of {@link EngineProvider}. */
 public class LgbmEngineProvider implements EngineProvider {
 
-    private static Engine engine;
-
     /** {@inheritDoc} */
     @Override
     public String getEngineName() {
@@ -34,10 +32,11 @@ public class LgbmEngineProvider implements EngineProvider {
 
     /** {@inheritDoc} */
     @Override
-    public synchronized Engine getEngine() {
-        if (engine == null) {
-            engine = LgbmEngine.newInstance();
-        }
-        return engine;
+    public Engine getEngine() {
+        return InstanceHolder.INSTANCE;
+    }
+
+    private static class InstanceHolder {
+        static final Engine INSTANCE = LgbmEngine.newInstance();
     }
 }

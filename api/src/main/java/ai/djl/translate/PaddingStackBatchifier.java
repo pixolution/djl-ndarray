@@ -29,10 +29,17 @@ public final class PaddingStackBatchifier implements Batchifier {
 
     private static final long serialVersionUID = 1L;
 
+    @SuppressWarnings("serial")
     private List<Integer> arraysToPad;
+
+    @SuppressWarnings("serial")
     private List<Integer> dimsToPad;
+
     private transient List<NDArraySupplier> paddingSuppliers;
+
+    @SuppressWarnings("serial")
     private List<Integer> paddingSizes;
+
     private boolean includeValidLengths;
 
     private PaddingStackBatchifier(Builder builder) {

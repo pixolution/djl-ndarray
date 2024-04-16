@@ -1,5 +1,7 @@
 # Forecast the future in a timeseries data with Deep Java Library (DJL)
+
 ## -- Demonstration on M5forecasting and airpassenger datasests
+
 Junyuan Zhang, Kexin Feng
 
 Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened) for further examples of timeseries data.
@@ -54,7 +56,7 @@ repositories {
 }
 dependencies {
   implementation "org.apache.logging.log4j:log4j-slf4j-impl:2.17.1"
-  implementation platform("ai.djl:bom:0.21.0")
+  implementation platform("ai.djl:bom:0.27.0")
   implementation "ai.djl:api"
   implementation "ai.djl.timeseries"
   runtimeOnly "ai.djl.mxnet:mxnet-engine"
@@ -179,7 +181,7 @@ We use the following metrics to evaluate the performance of the DeepAR model in 
 > [INFO ] - metric: MSE:   70.64
 ```
 
-Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview/evaluation). The detailed formula is in [here](https://mofc.unic.ac.cy/wp-content/uploads/2020/03/). It is different from the Root-mean-square error [RMSE](https://en.wikipedia.org/wiki/Root-mean-square_deviation) in that RMSSE is based on the variation between two contiguous data points. So this metric is scale invariant, suitable for timeseries data.
+Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview/evaluation). The detailed formula is in [here](https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx). It is different from the Root-mean-square error [RMSE](https://en.wikipedia.org/wiki/Root-mean-square_deviation) in that RMSSE is based on the variation between two contiguous data points. So this metric is scale invariant, suitable for timeseries data.
 
 As you can see, in the result metric above, the model has `RMSSE = 1.00`. This means that, on average, the error
 between the prediction and the actual data is around `1.00` time the average variation of the timeseries. This is also

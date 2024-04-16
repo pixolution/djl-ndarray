@@ -19,6 +19,8 @@ import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.types.{BinaryType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 
+import scala.jdk.CollectionConverters.{collectionAsScalaIterableConverter, seqAsJavaListConverter}
+
 /**
  * BinaryPredictor performs prediction on binary input.
  *
@@ -45,6 +47,7 @@ class BinaryPredictor(override val uid: String) extends BasePredictor[Array[Byte
    */
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
+  setDefault(batchSize, 10)
   setDefault(inputClass, classOf[Array[Byte]])
   setDefault(outputClass, classOf[Array[Byte]])
   setDefault(translatorFactory, new NpBinaryTranslatorFactory())
@@ -61,7 +64,6 @@ class BinaryPredictor(override val uid: String) extends BasePredictor[Array[Byte
 
   /** @inheritdoc */
   override def transform(dataset: Dataset[_]): DataFrame = {
-    arguments.put("batchifier", $(batchifier))
     inputColIndex = dataset.schema.fieldIndex($(inputCol))
     super.transform(dataset)
   }
@@ -69,13 +71,17 @@ class BinaryPredictor(override val uid: String) extends BasePredictor[Array[Byte
   /** @inheritdoc */
   override protected def transformRows(iter: Iterator[Row]): Iterator[Row] = {
     val predictor = model.newPredictor()
-    iter.map(row => {
-      Row.fromSeq(row.toSeq :+ predictor.predict(row.getAs[Array[Byte]](inputColIndex)))
-    })
+    iter.grouped($(batchSize)).flatMap { batch =>
+      val inputs = batch.map(_.getAs[Array[Byte]](inputColIndex)).asJava
+      val output = predictor.batchPredict(inputs).asScala
+      batch.zip(output).map { case (row, out) =>
+        Row.fromSeq(row.toSeq :+ out)
+      }
+    }
   }
 
   /** @inheritdoc */
-  def validateInputType(schema: StructType): Unit = {
+  override protected def validateInputType(schema: StructType): Unit = {
     validateType(schema($(inputCol)), BinaryType)
   }
 

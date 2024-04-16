@@ -24,7 +24,7 @@ to narrow down your search condition and locate the model you want to load.
 DJL Builder convention. The methods start with `set` are required fields, and `opt` for optional fields.
 You must call `setType()` method when creating a `Criteria` object:
 
-```
+```java
 Criteria<Image, Classifications> criteria = Criteria.builder()
         .setTypes(Image.class, Classifications.class)
         .build();
@@ -95,7 +95,7 @@ naming the model file name to be the same as the directory or archive file.
 If your model file located in a sub-folder of the model directory or has a different name,
 you can specify modelName by `.optModelName()` in criteria:
 
-```
+```java
 Criteria<Image, Classifications> criteria = Criteria.builder()
         .optModelName("traced_model/resnet18.pt") // specify model file prefix
 ```
@@ -181,7 +181,7 @@ Here is a few tips you can use to help you debug model loading issue:
 See [here](development/configure_logging.md#configure-logging-level) for how to enable debug log
 
 #### List models programmatically in your code
-You can use [ModelZoo.listModels()](https://javadoc.io/static/ai.djl/api/0.21.0/ai/djl/repository/zoo/ModelZoo.html#listModels--) API to query available models.
+You can use [ModelZoo.listModels()](https://javadoc.io/static/ai.djl/api/0.27.0/ai/djl/repository/zoo/ModelZoo.html#listModels--) API to query available models.
 
 #### List available models using DJL command line
 

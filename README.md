@@ -28,7 +28,7 @@ The following pseudocode demonstrates running inference:
     // Assume user uses a pre-trained model from model zoo, they just need to load it
     Criteria<Image, Classifications> criteria =
             Criteria.builder()
-                    .optApplication(Application.CV.OBJECT_DETECTION) // find object dection model
+                    .optApplication(Application.CV.OBJECT_DETECTION) // find object detection model
                     .setTypes(Image.class, Classifications.class)    // define input and output
                     .optFilter("backbone", "resnet50")               // choose network architecture
                     .build();
@@ -81,32 +81,18 @@ The following pseudocode demonstrates running training:
 
 - [Documentation](docs/README.md#documentation)
 - [DJL's D2L Book](https://d2l.djl.ai/)
-- [JavaDoc API Reference](https://javadoc.djl.ai/)
+- [JavaDoc API Reference](https://djl.ai/website/javadoc.html)
 
 ## Release Notes
 
-* [0.21.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.21.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.21.0))
-* [0.20.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.20.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.20.0))
-* [0.19.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.19.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.19.0))
-* [0.18.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.18.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.18.0))
-* [0.17.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.17.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.17.0))
-* [0.16.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.16.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.16.0))
-* [0.15.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.15.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.15.0))
-* [0.14.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.14.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.14.0))
-* [0.13.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.13.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.13.0))
-* [0.12.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.12.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.12.0))
-* [0.11.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.11.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.11.0))
-* [0.10.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.10.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.10.0))
-* [0.9.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.9.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.9.0))
-* [0.8.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.8.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.8.0))
-* [0.6.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.6.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.6.0))
-* [0.5.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.5.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.5.0))
-* [0.4.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.4.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.4.0))
-* [0.3.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.3.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.3.0))
-* [0.2.1](https://github.com/deepjavalibrary/djl/releases/tag/v0.2.1) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.2.1))
-* [0.2.0 Initial release](https://github.com/deepjavalibrary/djl/releases/tag/v0.2.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.2.0))
+* [0.27.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.27.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.27.0))
+* [0.26.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.26.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.26.0))
+* [0.25.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.25.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.25.0))
+* [0.24.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.24.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.24.0))
+* [0.23.0](https://github.com/deepjavalibrary/djl/releases/tag/v0.23.0) ([Code](https://github.com/deepjavalibrary/djl/tree/v0.23.0))
+* [+23 releases](https://github.com/deepjavalibrary/djl/releases)
 
-The release of DJL 0.21.0 is planned for January or February 2022.
+The release of DJL 0.28.0 is planned for May 2024.
 
 ## Building From Source
 

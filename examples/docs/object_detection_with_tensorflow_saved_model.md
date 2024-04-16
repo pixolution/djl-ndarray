@@ -21,7 +21,7 @@ The pre-trained SSD model can be found [here](http://download.tensorflow.org/mod
 You'll find a folder named ```ssd_mobilenet_v2_320x320_coco17_tpu-8/saved_model```. You need
 to specify model name to let ModelZoo load the model from right location:
 
-```
+```java
 Criteria<Image, DetectedObjects> criteria =  Criteria.builder()
     .setTypes(Image.class, DetectedObjects.class)
     .optModelUrls(modelUrl)
@@ -43,7 +43,7 @@ You can find the image used in this example in the project test resource folder:
 ### Build the project and run
 Use the following command to run the project:
 
-```
+```sh
 cd examples
 ./gradlew run -Dmain=ai.djl.examples.inference.ObjectDetectionWithTensorflowSavedModel
 ```
@@ -51,11 +51,11 @@ cd examples
 Your output should look like the following:
 
 ```text
-[main] INFO ObjectDetectionWithTensorflowSavedModel - Detected objects image has been saved in: build\output\detected-dog_bike_car.png
-[main] INFO ObjectDetectionWithTensorflowSavedModel - [
-	class: "bicycle", probability: 0.80220, bounds: [x=0.147, y=0.209, width=0.576, height=0.603]
-	class: "car", probability: 0.73779, bounds: [x=0.596, y=0.145, width=0.297, height=0.149]
-	class: "dog", probability: 0.72259, bounds: [x=0.172, y=0.397, width=0.261, height=0.548]
+[main] INFO - Detected objects image has been saved in: build\output\detected-dog_bike_car.png
+[main] INFO - [
+	{"class": "bicycle", "probability": 0.80220, "bounds": {"x"=0.147, "y"=0.209, "width"=0.576, "height"=0.603}}
+	{"class": "car", "probability": 0.73779, "bounds": {"x"=0.596, "y"=0.145, "width"=0.297, "height"=0.149}}
+	{"class": "dog", "probability": 0.72259, "bounds": {"x"=0.172, "y"=0.397, "width"=0.261, "height"=0.548}}
 ]
 ```
 

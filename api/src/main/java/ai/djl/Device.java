@@ -14,11 +14,17 @@ package ai.djl;
 
 import ai.djl.engine.Engine;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * The {@code Device} class provides the specified assignment for CPU/GPU processing on the {@code
@@ -30,7 +36,7 @@ import java.util.regex.Pattern;
  * @see <a href="https://d2l.djl.ai/chapter_deep-learning-computation/use-gpu.html">The D2L chapter
  *     on GPU devices</a>
  */
-public final class Device {
+public class Device {
 
     private static final Map<String, Device> CACHE = new ConcurrentHashMap<>();
 
@@ -39,8 +45,8 @@ public final class Device {
 
     private static final Pattern DEVICE_NAME = Pattern.compile("([a-z]+)([0-9]*)");
 
-    private String deviceType;
-    private int deviceId;
+    protected String deviceType;
+    protected int deviceId;
 
     /**
      * Creates a {@code Device} with basic information.
@@ -101,6 +107,13 @@ public final class Device {
             return engine.defaultDevice();
         }
 
+        if (deviceName.contains("+")) {
+            String[] split = deviceName.split("\\+");
+            List<Device> subDevices =
+                    Arrays.stream(split).map(n -> fromName(n, engine)).collect(Collectors.toList());
+            return new MultiDevice(subDevices);
+        }
+
         Matcher matcher = DEVICE_NAME.matcher(deviceName);
         if (matcher.matches()) {
             String deviceType = matcher.group(1);
@@ -148,6 +161,15 @@ public final class Device {
      */
     public boolean isGpu() {
         return Type.GPU.equals(deviceType);
+    }
+
+    /**
+     * Returns the sub devices if present (such as a {@link MultiDevice}), otherwise this.
+     *
+     * @return the sub devices if present (such as a {@link MultiDevice}), otherwise this.
+     */
+    public List<Device> getDevices() {
+        return Collections.singletonList(this);
     }
 
     /** {@inheritDoc} */
@@ -213,5 +235,89 @@ public final class Device {
     public interface Type {
         String CPU = "cpu";
         String GPU = "gpu";
+    }
+
+    /** A combined {@link Device} representing the composition of multiple other devices. */
+    public static class MultiDevice extends Device {
+
+        List<Device> devices;
+
+        /**
+         * Constructs a {@link MultiDevice} with a range of new devices.
+         *
+         * @param deviceType the type of the sub-devices
+         * @param startInclusive the start (inclusive) of the devices range
+         * @param endExclusive the end (exclusive) of the devices range
+         */
+        public MultiDevice(String deviceType, int startInclusive, int endExclusive) {
+            this(
+                    IntStream.range(startInclusive, endExclusive)
+                            .mapToObj(i -> Device.of(deviceType, i))
+                            .collect(Collectors.toList()));
+        }
+
+        /**
+         * Constructs a {@link MultiDevice} from sub devices.
+         *
+         * @param devices the sub devices
+         */
+        public MultiDevice(Device... devices) {
+            this(Arrays.asList(devices));
+        }
+
+        /**
+         * Constructs a {@link MultiDevice} from sub devices.
+         *
+         * @param devices the sub devices
+         */
+        public MultiDevice(List<Device> devices) {
+            super(null, -1);
+            devices.sort(
+                    Comparator.comparing(Device::getDeviceType, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparingInt(Device::getDeviceId));
+            this.deviceType =
+                    String.join(
+                            "+",
+                            (Iterable<String>)
+                                    () ->
+                                            devices.stream()
+                                                    .map(d -> d.getDeviceType() + d.getDeviceId())
+                                                    .iterator());
+            this.devices = devices;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public List<Device> getDevices() {
+            return devices;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
+            MultiDevice that = (MultiDevice) o;
+            return Objects.equals(devices, that.devices);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), devices);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public String toString() {
+            return deviceType + "()";
+        }
     }
 }

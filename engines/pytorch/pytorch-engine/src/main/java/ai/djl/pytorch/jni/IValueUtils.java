@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** IValueUtils is utility class to deal with IValue in PyTorch. */
@@ -33,6 +34,9 @@ public final class IValueUtils {
 
     private static final Pattern PATTERN_LIST = Pattern.compile("\\w+\\[]");
     private static final Pattern PATTERN_TUPLE = Pattern.compile("\\w+\\(\\)");
+    private static final Pattern PATTERN_TUPLE_OF_TUPLE = Pattern.compile("\\w+(\\([\\d,]+\\))");
+    private static final boolean CUDA_STREAM =
+            Boolean.getBoolean("ai.djl.pytorch.enable_cuda_stream");
 
     private IValueUtils() {}
 
@@ -51,7 +55,7 @@ public final class IValueUtils {
         long[] iValueHandles = Arrays.stream(ivalues).mapToLong(IValue::getHandle).toArray();
         long result =
                 PyTorchLibrary.LIB.moduleRunMethod(
-                        block.getHandle(), method, iValueHandles, isTrain);
+                        block.getHandle(), method, iValueHandles, isTrain, CUDA_STREAM);
         PtNDManager manager = (PtNDManager) inputs.get(0).getManager();
         Arrays.stream(ivalues).forEach(IValue::close);
         try (IValue iValue = new IValue(result)) {
@@ -66,7 +70,7 @@ public final class IValueUtils {
      * @param inputs the input {@link IValue}
      * @return the result {@link IValue}
      */
-    public static IValue forward(PtSymbolBlock block, IValue... inputs) {
+    public static IValue forward(PtSymbolBlock block, IValue[] inputs) {
         return runMethod(block, "forward", inputs);
     }
 
@@ -79,9 +83,10 @@ public final class IValueUtils {
      * @return the result {@link IValue}
      */
     public static IValue runMethod(PtSymbolBlock block, String methodName, IValue... inputs) {
-        long[] handles = Arrays.stream(inputs).mapToLong(IValue::getHandle).toArray();
+        long[] iValueHandles = Arrays.stream(inputs).mapToLong(IValue::getHandle).toArray();
         return new IValue(
-                PyTorchLibrary.LIB.moduleRunMethod(block.getHandle(), methodName, handles, false));
+                PyTorchLibrary.LIB.moduleRunMethod(
+                        block.getHandle(), methodName, iValueHandles, false, CUDA_STREAM));
     }
 
     private static int addToMap(
@@ -100,6 +105,7 @@ public final class IValueUtils {
         String methodName = "forward";
         for (NDArray array : ndList) {
             String name = array.getName();
+            Matcher m;
             if (name != null && name.contains(".")) {
                 String[] strings = name.split("\\.", 2);
                 int index = addToMap(indexMap, strings[0], outputs);
@@ -115,6 +121,11 @@ public final class IValueUtils {
                 int index = addToMap(indexMap, name, outputs);
                 PairList<String, PtNDArray> pl = outputs.get(index);
                 pl.add("()", (PtNDArray) array);
+            } else if (name != null && (m = PATTERN_TUPLE_OF_TUPLE.matcher(name)).matches()) {
+                int index = addToMap(indexMap, name, outputs);
+                String key = m.group(1);
+                PairList<String, PtNDArray> pl = outputs.get(index);
+                pl.add(key, (PtNDArray) array);
             } else {
                 PairList<String, PtNDArray> pl = new PairList<>();
                 pl.add(null, (PtNDArray) array);
@@ -136,6 +147,19 @@ public final class IValueUtils {
                 // Tuple
                 IValue[] arrays = pl.values().stream().map(IValue::from).toArray(IValue[]::new);
                 ret[i] = IValue.tupleFrom(arrays);
+            } else if (key.startsWith("(")) {
+                // Tuple of tuple
+                String[] keys = key.substring(1, key.length() - 1).split(",");
+                int[] dim = Arrays.stream(keys).mapToInt(Integer::parseInt).toArray();
+                List<PtNDArray> arrays = pl.values();
+                int product = 1;
+                for (int d : dim) {
+                    product *= d;
+                }
+                if (product != arrays.size()) {
+                    throw new IllegalArgumentException("Invalid NDList tuple size: " + key);
+                }
+                ret[i] = IValueUtils.toTupleIValueRecur(arrays, dim, 0, 0).getKey();
             } else {
                 Map<String, PtNDArray> map = new ConcurrentHashMap<>();
                 for (Pair<String, PtNDArray> pair : pl) {
@@ -145,5 +169,25 @@ public final class IValueUtils {
             }
         }
         return new Pair<>(ret, methodName);
+    }
+
+    private static Pair<IValue, Integer> toTupleIValueRecur(
+            List<PtNDArray> list, int[] dims, int start, int level) {
+        if (dims.length - 1 == level) {
+            int dim = dims[level];
+            IValue[] iValues = new IValue[dim];
+            for (int i = 0; i < dim; i++) {
+                iValues[i] = IValue.from(list.get(i + start));
+            }
+            return new Pair<>(IValue.tupleFrom(iValues), Math.toIntExact((start + dim)));
+        }
+
+        IValue[] output = new IValue[dims[0]];
+        for (int j = 0; j < dims[level]; j++) {
+            Pair<IValue, Integer> p = toTupleIValueRecur(list, dims, start, level + 1);
+            start = p.getValue();
+            output[j] = p.getKey();
+        }
+        return new Pair<>(IValue.tupleFrom(output), start);
     }
 }

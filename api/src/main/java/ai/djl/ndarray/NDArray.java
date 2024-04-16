@@ -27,6 +27,7 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -261,6 +262,42 @@ public interface NDArray extends NDResource, BytesSupplier {
     }
 
     /**
+     * Converts this {@code NDArray} to an short array.
+     *
+     * @return an int array
+     * @throws IllegalStateException when {@link DataType} of this {@code NDArray} mismatches
+     */
+    default short[] toShortArray() {
+        if (getDataType() != DataType.INT16) {
+            throw new IllegalStateException(
+                    "DataType mismatch, Required int" + " Actual " + getDataType());
+        }
+        ShortBuffer ib = toByteBuffer().asShortBuffer();
+        short[] ret = new short[ib.remaining()];
+        ib.get(ret);
+        return ret;
+    }
+
+    /**
+     * Converts this {@code NDArray} to an short array.
+     *
+     * @return an int array
+     * @throws IllegalStateException when {@link DataType} of this {@code NDArray} mismatches
+     */
+    default int[] toUnsignedShortArray() {
+        if (getDataType() != DataType.UINT16) {
+            throw new IllegalStateException(
+                    "DataType mismatch, Required int" + " Actual " + getDataType());
+        }
+        ShortBuffer ib = toByteBuffer().asShortBuffer();
+        int[] ret = new int[ib.remaining()];
+        for (int i = 0; i < ret.length; ++i) {
+            ret[i] = ib.get() & 0xffff;
+        }
+        return ret;
+    }
+
+    /**
      * Converts this {@code NDArray} to an int array.
      *
      * @return an int array
@@ -274,6 +311,25 @@ public interface NDArray extends NDResource, BytesSupplier {
         IntBuffer ib = toByteBuffer().asIntBuffer();
         int[] ret = new int[ib.remaining()];
         ib.get(ret);
+        return ret;
+    }
+
+    /**
+     * Converts this {@code NDArray} to an unsigned int array.
+     *
+     * @return a long array
+     * @throws IllegalStateException when {@link DataType} of this {@code NDArray} mismatches
+     */
+    default long[] toUnsignedIntArray() {
+        if (getDataType() != DataType.UINT32) {
+            throw new IllegalStateException(
+                    "DataType mismatch, Required int" + " Actual " + getDataType());
+        }
+        IntBuffer ib = toByteBuffer().asIntBuffer();
+        long[] ret = new long[ib.remaining()];
+        for (int i = 0; i < ret.length; ++i) {
+            ret[i] = ib.get() & 0X00000000FFFFFFFFL;
+        }
         return ret;
     }
 
@@ -370,6 +426,7 @@ public interface NDArray extends NDResource, BytesSupplier {
      *
      * @return a Number array
      */
+    @SuppressWarnings("PMD.AvoidArrayLoops")
     default Number[] toArray() {
         switch (getDataType()) {
             case FLOAT16:
@@ -380,9 +437,21 @@ public interface NDArray extends NDResource, BytesSupplier {
                         .toArray(Number[]::new);
             case FLOAT64:
                 return Arrays.stream(toDoubleArray()).boxed().toArray(Double[]::new);
+            case INT16:
+                short[] buf = toShortArray();
+                Short[] sbuf = new Short[buf.length];
+                for (int i = 0; i < buf.length; ++i) {
+                    sbuf[i] = buf[i];
+                }
+                return sbuf;
+            case UINT16:
+                return Arrays.stream(toUnsignedShortArray()).boxed().toArray(Integer[]::new);
             case INT32:
                 return Arrays.stream(toIntArray()).boxed().toArray(Integer[]::new);
+            case UINT32:
+                return Arrays.stream(toUnsignedIntArray()).boxed().toArray(Long[]::new);
             case INT64:
+            case UINT64:
                 return Arrays.stream(toLongArray()).boxed().toArray(Long[]::new);
             case BOOLEAN:
             case INT8:
@@ -2276,6 +2345,24 @@ public interface NDArray extends NDResource, BytesSupplier {
     NDArray atan();
 
     /**
+     * Returns the element-wise arc-tangent of this/other choosing the quadrant correctly.
+     *
+     * <p>Examples
+     *
+     * <pre>
+     * jshell&gt; NDArray x = manager.create(new float[] {0f, 1f});
+     * jshell&gt; NDArray y = manager.create(new float[] {0f, -6f});
+     * jshell&gt; x.atan2(y);
+     * ND: (2) cpu() float64
+     * [0.    , 2.9764]
+     * </pre>
+     *
+     * @param other The other {@code NDArray}
+     * @return the result {@code NDArray}
+     */
+    NDArray atan2(NDArray other);
+
+    /**
      * Returns the hyperbolic sine of this {@code NDArray} element-wise.
      *
      * <p>sinh(x)=0.5*(exp(x) - exp(-x))
@@ -3307,6 +3394,48 @@ public interface NDArray extends NDResource, BytesSupplier {
             boolean returnComplex);
 
     /**
+     * Computes the two-dimensional Discrete Fourier Transform.
+     *
+     * @param sizes Sizes of the transformed axes of the output. Will be zero-padded or trimmed to
+     *     this size.
+     * @param axes Axes over which to compute the 2D-FFT.
+     * @return The truncated or zero-padded input, transformed along the axes.
+     */
+    NDArray fft2(long[] sizes, long[] axes);
+
+    /**
+     * Computes the two-dimensional Discrete Fourier Transform along the last 2 axes.
+     *
+     * @param sizes Sizes of the transformed axes of the output. Will be zero-padded or trimmed to
+     *     this size.
+     * @return The truncated or zero-padded input, transformed along the last two axes
+     */
+    default NDArray fft2(long[] sizes) {
+        return fft2(sizes, new long[] {-2, -1});
+    }
+
+    /**
+     * Computes the two-dimensional inverse Discrete Fourier Transform.
+     *
+     * @param sizes Sizes of the transformed axes of the output. Will be zero-padded or trimmed to
+     *     this size.
+     * @param axes Axes over which to compute the 2D-Inverse-FFT.
+     * @return The truncated or zero-padded input, transformed along the axes.
+     */
+    NDArray ifft2(long[] sizes, long[] axes);
+
+    /**
+     * Computes the two-dimensional inverse Discrete Fourier Transform along the last 2 axes.
+     *
+     * @param sizes Sizes of the transformed axes of the output. Will be zero-padded or trimmed to
+     *     this size.
+     * @return The truncated or zero-padded input, transformed along the axes.
+     */
+    default NDArray ifft2(long[] sizes) {
+        return ifft2(sizes, new long[] {-2, -1});
+    }
+
+    /**
      * Reshapes this {@code NDArray} to the given {@link Shape}.
      *
      * <p>Examples
@@ -4137,7 +4266,8 @@ public interface NDArray extends NDResource, BytesSupplier {
      * jshell&gt; NDArray array = manager.create(new float[] {0f, 1f, 2f, 3f}, new Shape(2, 2));
      * jshell&gt; array.repeat(1, 2);
      * ND: (6) cpu() float32
-     * [0., 0., 1., 1., 2., 2.]
+     * [[0., 0., 1., 1.],
+     *  [2., 2., 3., 3.]]
      * </pre>
      *
      * @param axis the axis to repeat
@@ -4545,6 +4675,28 @@ public interface NDArray extends NDResource, BytesSupplier {
     NDArray argMax(int axis);
 
     /**
+     * Returns (values, indices) of the top k values along given axis.
+     *
+     * @param k the number of returned values
+     * @param axis the axis to sort along, whose shape is reduced to k
+     * @return a {@code NDList} containing (values, indices)
+     */
+    default NDList topK(int k, int axis) {
+        return topK(k, axis, true, true);
+    }
+
+    /**
+     * Returns (values, indices) of the top k values along given axis.
+     *
+     * @param k the number of returned values
+     * @param axis the axis to sort along, whose shape is reduced to k
+     * @param largest whether the largest or the smallest
+     * @param sorted whether the sorted or not
+     * @return a {@code NDList} containing (values, indices)
+     */
+    NDList topK(int k, int axis, boolean largest, boolean sorted);
+
+    /**
      * Returns the indices of the minimum values into the flattened {@code NDArray}.
      *
      * <p>Examples
@@ -4829,6 +4981,22 @@ public interface NDArray extends NDResource, BytesSupplier {
      * @return The inverse of gauss error of the {@code NDArray}, element-wise
      */
     NDArray erfinv();
+
+    /**
+     * Returns element-wise gauss error function of the {@code NDArray}.
+     *
+     * <p>Examples
+     *
+     * <pre>
+     * jshell&gt; NDArray array = manager.create(new float[] {0f, 0.4769f, Float.NEGATIVE_INFINITY});
+     * jshell&gt; array.erf();
+     * ND: (3) cpu() float32
+     * [0., 0.5, -1]
+     * </pre>
+     *
+     * @return The gauss error of the {@code NDArray}, element-wise
+     */
+    NDArray erf();
 
     /** {@inheritDoc} */
     @Override

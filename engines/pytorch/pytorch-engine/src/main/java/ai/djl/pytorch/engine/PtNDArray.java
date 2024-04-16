@@ -60,6 +60,7 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
      * @param manager the manager to attach the new array to
      * @param handle the pointer to the native PyTorch memory
      */
+    @SuppressWarnings("this-escape")
     public PtNDArray(PtNDManager manager, long handle) {
         super(handle);
         this.manager = manager;
@@ -76,6 +77,7 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
      * @param handle the pointer to the native PyTorch memory
      * @param data the direct buffer of the data
      */
+    @SuppressWarnings("this-escape")
     public PtNDArray(PtNDManager manager, long handle, ByteBuffer data) {
         super(handle);
         this.manager = manager;
@@ -93,10 +95,12 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
      * @param strs the string array
      * @param shape the {@link Shape} of the {@link NDArray}
      */
+    @SuppressWarnings("this-escape")
     public PtNDArray(PtNDManager manager, String[] strs, Shape shape) {
         super(-1L);
         this.manager = manager;
         this.strs = strs;
+        this.sparseFormat = SparseFormat.DENSE;
         this.shape = shape;
         this.dataType = DataType.STRING;
         NDScope.register(this);
@@ -162,7 +166,9 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
         if (device.equals(getDevice()) && !copy) {
             return this;
         }
-        return JniUtils.to(this, getDataType(), device);
+        PtNDArray array = JniUtils.to(this, getDataType(), device);
+        array.setName(getName());
+        return array;
     }
 
     /** {@inheritDoc} */
@@ -171,7 +177,9 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
         if (dataType.equals(getDataType()) && !copy) {
             return this;
         }
-        return JniUtils.to(this, dataType, getDevice());
+        PtNDArray array = JniUtils.to(this, dataType, getDevice());
+        array.setName(array.getName());
+        return array;
     }
 
     /** {@inheritDoc} */
@@ -218,6 +226,10 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
     /** {@inheritDoc} */
     @Override
     public ByteBuffer toByteBuffer() {
+        if (getDataType() == DataType.STRING) {
+            throw new UnsupportedOperationException(
+                    "toByteBuffer is not supported for String tensor.");
+        }
         return JniUtils.getByteBuffer(this);
     }
 
@@ -366,7 +378,9 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
     /** {@inheritDoc} */
     @Override
     public NDArray duplicate() {
-        return JniUtils.clone(this);
+        NDArray array = JniUtils.clone(this);
+        array.setName(getName());
+        return array;
     }
 
     /** {@inheritDoc} */
@@ -419,6 +433,9 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
         }
         if (getDataType() != other.getDataType()) {
             return false;
+        }
+        if (getDataType() == DataType.STRING) {
+            return Arrays.equals(toStringArray(), other.toStringArray());
         }
         return JniUtils.contentEqual(this, manager.from(other));
     }
@@ -884,6 +901,12 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
 
     /** {@inheritDoc} */
     @Override
+    public PtNDArray atan2(NDArray other) {
+        return JniUtils.atan2(this, manager.from(other));
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public PtNDArray sinh() {
         return JniUtils.sinh(this);
     }
@@ -1089,6 +1112,18 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
             boolean returnComplex) {
         return JniUtils.stft(
                 this, nFft, hopLength, (PtNDArray) window, center, normalize, returnComplex);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray fft2(long[] sizes, long[] axes) {
+        return JniUtils.fft2(this, sizes, axes);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray ifft2(long[] sizes, long[] axes) {
+        return JniUtils.ifft2(this, sizes, axes);
     }
 
     /** {@inheritDoc} */
@@ -1351,8 +1386,9 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
         int otherDim = other.getShape().dimension();
         if (selfDim != otherDim || selfDim > 2) {
             throw new UnsupportedOperationException(
-                    "Dimension mismatch or high dimensional dot operation is not supported. Please"
-                            + " use .matMul instead.");
+                    "Dimension mismatch or dimension is greater than 2.  Dot product is only"
+                            + " applied on two 1D vectors. For high dimensions, please use .matMul"
+                            + " instead.");
         }
         return JniUtils.dot(this, manager.from(other));
     }
@@ -1440,6 +1476,12 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
 
     /** {@inheritDoc} */
     @Override
+    public NDList topK(int k, int axis, boolean largest, boolean sorted) {
+        return JniUtils.topK(this, k, axis, largest, sorted);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public PtNDArray argMin() {
         if (isEmpty()) {
             throw new IllegalArgumentException("attempt to get argMin of an empty NDArray");
@@ -1475,13 +1517,19 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
     /** {@inheritDoc} */
     @Override
     public PtNDArray median() {
-        throw new UnsupportedOperationException("Not implemented");
+        return median(new int[] {-1});
     }
 
     /** {@inheritDoc} */
     @Override
     public PtNDArray median(int[] axes) {
-        throw new UnsupportedOperationException("Not implemented");
+        if (axes.length != 1) {
+            throw new UnsupportedOperationException(
+                    "Not supporting zero or multi-dimension median");
+        }
+        NDList result = JniUtils.median(this, axes[0], false);
+        result.get(1).close();
+        return (PtNDArray) result.get(0);
     }
 
     /** {@inheritDoc} */
@@ -1518,6 +1566,12 @@ public class PtNDArray extends NativeResource<Long> implements NDArray {
     @Override
     public PtNDArray erfinv() {
         return JniUtils.erfinv(this);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public PtNDArray erf() {
+        return JniUtils.erf(this);
     }
 
     /** {@inheritDoc} */

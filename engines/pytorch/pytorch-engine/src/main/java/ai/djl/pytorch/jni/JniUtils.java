@@ -665,6 +665,18 @@ public final class JniUtils {
                 PyTorchLibrary.LIB.torchArgMax(ndArray.getHandle(), dim, keepDim));
     }
 
+    public static NDList topK(
+            PtNDArray ndArray, long k, long axis, boolean largest, boolean sorted) {
+        long[] handles =
+                PyTorchLibrary.LIB.torchTopK(ndArray.getHandle(), k, axis, largest, sorted);
+        NDList list = new NDList(handles.length);
+        for (long handle : handles) {
+            PtNDArray array = new PtNDArray(ndArray.getManager(), handle);
+            list.add(array);
+        }
+        return list;
+    }
+
     public static PtNDArray argMin(PtNDArray ndArray) {
         return new PtNDArray(
                 ndArray.getManager(), PyTorchLibrary.LIB.torchArgMin(ndArray.getHandle()));
@@ -863,6 +875,13 @@ public final class JniUtils {
                 PyTorchLibrary.LIB.torchMin(ndArray.getHandle(), dim, keepDim));
     }
 
+    public static NDList median(PtNDArray ndArray, long dim, boolean keepDim) {
+        long[] handles = PyTorchLibrary.LIB.torchMedian(ndArray.getHandle(), dim, keepDim);
+        return new NDList(
+                new PtNDArray(ndArray.getManager(), handles[0]),
+                new PtNDArray(ndArray.getManager(), handles[1]));
+    }
+
     public static PtNDArray mean(PtNDArray ndArray) {
         return new PtNDArray(
                 ndArray.getManager(), PyTorchLibrary.LIB.torchMean(ndArray.getHandle()));
@@ -1021,6 +1040,18 @@ public final class JniUtils {
         return new PtNDArray(ndArray.getManager(), handle);
     }
 
+    public static PtNDArray fft2(PtNDArray ndArray, long[] sizes, long[] axes) {
+        return new PtNDArray(
+                ndArray.getManager(),
+                PyTorchLibrary.LIB.torchFft2(ndArray.getHandle(), sizes, axes));
+    }
+
+    public static PtNDArray ifft2(PtNDArray ndArray, long[] sizes, long[] axes) {
+        return new PtNDArray(
+                ndArray.getManager(),
+                PyTorchLibrary.LIB.torchIfft2(ndArray.getHandle(), sizes, axes));
+    }
+
     public static PtNDArray real(PtNDArray ndArray) {
         long handle = PyTorchLibrary.LIB.torchViewAsReal(ndArray.getHandle());
         if (handle == -1) {
@@ -1124,6 +1155,12 @@ public final class JniUtils {
     public static PtNDArray atan(PtNDArray ndArray) {
         return new PtNDArray(
                 ndArray.getManager(), PyTorchLibrary.LIB.torchAtan(ndArray.getHandle()));
+    }
+
+    public static PtNDArray atan2(PtNDArray self, PtNDArray other) {
+        return new PtNDArray(
+                self.getManager(),
+                PyTorchLibrary.LIB.torchAtan2(self.getHandle(), other.getHandle()));
     }
 
     public static PtNDArray sqrt(PtNDArray ndArray) {
@@ -1313,6 +1350,11 @@ public final class JniUtils {
     public static PtNDArray erfinv(PtNDArray ndArray) {
         return new PtNDArray(
                 ndArray.getManager(), PyTorchLibrary.LIB.torchErfinv(ndArray.getHandle()));
+    }
+
+    public static PtNDArray erf(PtNDArray ndArray) {
+        return new PtNDArray(
+                ndArray.getManager(), PyTorchLibrary.LIB.torchErf(ndArray.getHandle()));
     }
 
     public static PtNDArray inverse(PtNDArray ndArray) {

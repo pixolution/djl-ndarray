@@ -18,6 +18,7 @@ import ai.djl.MalformedModelException;
 import ai.djl.Model;
 import ai.djl.ndarray.types.DataType;
 import ai.djl.nn.Parameter;
+import ai.djl.nn.Parameter.Type;
 import ai.djl.pytorch.jni.JniUtils;
 import ai.djl.training.Trainer;
 import ai.djl.training.TrainingConfig;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -64,13 +66,17 @@ public class PtModel extends BaseModel {
             throws IOException, MalformedModelException {
         setModelDir(modelPath);
         wasLoaded = true;
-        if (prefix == null) {
+
+        Path modelFile;
+        if (prefix != null) {
+            modelFile = findModelFile(prefix);
+        } else {
+            // search for .pt file with modelName, folder name or "model.pt"
+            modelFile = findModelFile(modelName, modelDir.toFile().getName(), "model.pt");
             prefix = modelName;
         }
 
         if (block == null) {
-            // search for .pt file with prefix, folder name or "model.pt"
-            Path modelFile = findModelFile(prefix, modelDir.toFile().getName(), "model.pt");
             if (modelFile == null) {
                 String fileName = prefix.endsWith(".pt") ? prefix : prefix + ".pt";
                 throw new FileNotFoundException(fileName + " file not found in: " + modelDir);
@@ -131,7 +137,8 @@ public class PtModel extends BaseModel {
 
     /** {@inheritDoc} */
     @Override
-    public void load(InputStream modelStream, Map<String, ?> options) throws IOException {
+    public void load(InputStream modelStream, Map<String, ?> options)
+            throws IOException, MalformedModelException {
         boolean mapLocation = false;
         if (options != null) {
             mapLocation = Boolean.parseBoolean((String) options.get("mapLocation"));
@@ -145,11 +152,26 @@ public class PtModel extends BaseModel {
      * @param modelStream the stream of the model file
      * @param mapLocation force load to specified device if true
      * @throws IOException model loading error
+     * @throws MalformedModelException if model file is corrupted
      */
-    public void load(InputStream modelStream, boolean mapLocation) throws IOException {
-        modelDir = Files.createTempDirectory("pt-model");
-        modelDir.toFile().deleteOnExit();
-        block = JniUtils.loadModule((PtNDManager) manager, modelStream, mapLocation, false);
+    public void load(InputStream modelStream, boolean mapLocation)
+            throws IOException, MalformedModelException {
+        wasLoaded = true;
+        if (block == null) {
+            modelDir = Files.createTempDirectory("pt-model");
+            modelDir.toFile().deleteOnExit();
+            block = JniUtils.loadModule((PtNDManager) manager, modelStream, mapLocation, false);
+
+            /*
+             * By default, the parameters are frozen, since the previous version before adding this
+             * trainParam, they were frozen due to the setting JITCallGuard guard, which disables
+             * autograd. Also, the pretrained parameters usually should not be updated too much. It
+             * is safe to freeze it. Users may unfreeze it and set their learning rate small.
+             */
+            block.freezeParameters(true);
+        } else {
+            readParameters(modelStream, Collections.emptyMap());
+        }
     }
 
     private Path findModelFile(String... prefixes) {
@@ -189,7 +211,9 @@ public class PtModel extends BaseModel {
         }
         if (wasLoaded) {
             // Unfreeze parameters if training directly
-            block.freezeParameters(false);
+            block.freezeParameters(
+                    false,
+                    p -> p.getType() != Type.RUNNING_MEAN && p.getType() != Type.RUNNING_VAR);
         }
         for (Pair<Initializer, Predicate<Parameter>> pair : initializer) {
             if (pair.getKey() != null && pair.getValue() != null) {

@@ -169,6 +169,8 @@ final class PyTorchLibrary {
 
     native long torchArgMax(long handle, long dim, boolean keepDim);
 
+    native long[] torchTopK(long handle, long k, long axis, boolean largest, boolean sorted);
+
     native long torchArgMin(long handle);
 
     native long torchArgMin(long handle, long dim, boolean keepDim);
@@ -236,6 +238,8 @@ final class PyTorchLibrary {
 
     native long torchMinimum(long self, long other);
 
+    native long[] torchMedian(long self, long dim, boolean keepDim);
+
     native long torchMin(long handle);
 
     native long torchMin(long handle, long dim, boolean keepDim);
@@ -268,6 +272,10 @@ final class PyTorchLibrary {
             boolean center,
             boolean normalize,
             boolean returnComplex);
+
+    native long torchFft2(long handle, long[] sizes, long[] axes);
+
+    native long torchIfft2(long handle, long[] sizes, long[] axes);
 
     native long torchViewAsReal(long handle);
 
@@ -327,6 +335,8 @@ final class PyTorchLibrary {
     native long torchAcos(long handle);
 
     native long torchAtan(long handle);
+
+    native long torchAtan2(long self, long other);
 
     native long torchSqrt(long handle);
 
@@ -400,6 +410,8 @@ final class PyTorchLibrary {
     native long torchHannWindow(long nfft, boolean periodic, int[] device);
 
     native long torchErfinv(long handle);
+
+    native long torchErf(long handle);
 
     native long torchInverse(long self);
 
@@ -536,7 +548,11 @@ final class PyTorchLibrary {
     native void moduleTrain(long handle);
 
     native long moduleRunMethod(
-            long moduleHandle, String methodName, long[] iValueHandles, boolean isTrain);
+            long moduleHandle,
+            String methodName,
+            long[] iValueHandles,
+            boolean isTrain,
+            boolean separateCudaStream);
 
     native void setGraphExecutorOptimize(boolean enabled);
 

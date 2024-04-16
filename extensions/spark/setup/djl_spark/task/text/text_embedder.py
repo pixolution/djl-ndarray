@@ -13,28 +13,39 @@
 
 from pyspark import SparkContext
 from pyspark.sql import DataFrame
+from typing import Optional
 
 
 class TextEmbedder:
 
-    def __init__(self, input_col, output_col, engine, model_url,
-                 output_class=None, translator=None):
+    def __init__(self,
+                 input_col: str,
+                 output_col: str,
+                 model_url: str,
+                 engine: Optional[str] = None,
+                 batch_size: Optional[int] = None,
+                 translator_factory=None,
+                 batchifier: Optional[str] = None):
         """
         Initializes the TextEmbedder.
 
         :param input_col: The input column
         :param output_col: The output column
-        :param engine (optional): The engine
         :param model_url: The model URL
-        :param output_class (optional): The output class
-        :param translator (optional): The translator. Default is TextEmbeddingTranslator.
+        :param engine (optional): The engine
+        :param batch_size (optional): The batch size
+        :param translator_factory (optional): The translator factory.
+                                              Default is TextEmbeddingTranslatorFactory.
+        :param batchifier (optional): The batchifier. Valid values include "none" (default),
+                                      "stack", and "padding".
         """
         self.input_col = input_col
         self.output_col = output_col
-        self.engine = engine
         self.model_url = model_url
-        self.output_class = output_class
-        self.translator = translator
+        self.engine = engine
+        self.batch_size = batch_size
+        self.translator_factory = translator_factory
+        self.batchifier = batchifier
 
     def embed(self, dataset):
         """
@@ -44,14 +55,16 @@ class TextEmbedder:
         :return: output dataset
         """
         sc = SparkContext._active_spark_context
-        embedder = sc._jvm.ai.djl.spark.task.text.TextEmbedder()
-        if self.output_class is not None:
-            embedder = embedder.setOutputClass(self.output_class)
-        if self.translator is not None:
-            embedder = embedder.setTranslator(self.translator)
-        embedder = embedder.setInputCol(self.input_col) \
+        embedder = sc._jvm.ai.djl.spark.task.text.TextEmbedder() \
+            .setInputCol(self.input_col) \
             .setOutputCol(self.output_col) \
-            .setEngine(self.engine) \
             .setModelUrl(self.model_url)
-        return DataFrame(embedder.embed(dataset._jdf),
-                         dataset.sparkSession)
+        if self.engine is not None:
+            embedder = embedder.setEngine(self.engine)
+        if self.batch_size is not None:
+            embedder = embedder.setBatchSize(self.batch_size)
+        if self.translator_factory is not None:
+            embedder = embedder.setTranslatorFactory(self.translator_factory)
+        if self.batchifier is not None:
+            embedder = embedder.setBatchifier(self.batchifier)
+        return DataFrame(embedder.embed(dataset._jdf), dataset.sparkSession)

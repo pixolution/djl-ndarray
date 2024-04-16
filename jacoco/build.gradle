@@ -11,7 +11,6 @@ dependencies {
     jacocoAggregation project(":api")
     jacocoAggregation project(":engines:tensorflow:tensorflow-api")
     jacocoAggregation project(":engines:tensorflow:tensorflow-engine")
-    jacocoAggregation project(":engines:tensorflow:tensorflow-native")
     jacocoAggregation project(":integration")
 }
 

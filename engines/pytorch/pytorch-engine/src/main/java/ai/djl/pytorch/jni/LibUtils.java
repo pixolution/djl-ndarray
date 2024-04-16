@@ -31,10 +31,14 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -61,6 +65,7 @@ public final class LibUtils {
 
     private static final Pattern VERSION_PATTERN =
             Pattern.compile("(\\d+\\.\\d+\\.\\d+(-[a-z]+)?)(-SNAPSHOT)?(-\\d+)?");
+    private static final Pattern LIB_PATTERN = Pattern.compile("(.*\\.(so(\\.\\d+)*|dll|dylib))");
 
     private static LibTorch libTorch;
 
@@ -102,10 +107,19 @@ public final class LibUtils {
 
     private static void loadLibTorch(LibTorch libTorch) {
         Path libDir = libTorch.dir.toAbsolutePath();
-        if ("1.8.1".equals(getVersion()) && System.getProperty("os.name").startsWith("Mac")) {
-            // PyTorch 1.8.1 libtorch_cpu.dylib cannot be loaded individually
-            return;
+        if (Files.exists(libDir.resolve("libstdc++.so.6"))) {
+            String libstd = Utils.getEnvOrSystemProperty("LIBSTDCXX_LIBRARY_PATH");
+            if (libstd != null) {
+                try {
+                    logger.info("Loading libstdc++.so.6 from: {}", libstd);
+                    System.load(libstd);
+                } catch (UnsatisfiedLinkError e) {
+                    logger.warn("Failed Loading libstdc++.so.6 from: {}", libstd);
+                }
+            }
         }
+        String libExclusion = Utils.getEnvOrSystemProperty("PYTORCH_LIBRARY_EXCLUSION", "");
+        Set<String> exclusion = new HashSet<>(Arrays.asList(libExclusion.split(",")));
         boolean isCuda = libTorch.flavor.contains("cu");
         List<String> deferred =
                 Arrays.asList(
@@ -116,36 +130,44 @@ public final class LibUtils {
                         System.mapLibraryName("torch_cuda_cpp"),
                         System.mapLibraryName("torch_cuda_cu"),
                         System.mapLibraryName("torch_cuda"),
+                        System.mapLibraryName("nvfuser_codegen"),
                         System.mapLibraryName("torch"));
 
         Set<String> loadLater = new HashSet<>(deferred);
         try (Stream<Path> paths = Files.walk(libDir)) {
-            List<Path> dependants = new ArrayList<>();
+            Map<Path, Integer> rank = new ConcurrentHashMap<>();
             paths.filter(
                             path -> {
                                 String name = path.getFileName().toString();
-                                if (!isCuda
+                                if (!LIB_PATTERN.matcher(name).matches()
+                                        || exclusion.contains(name)) {
+                                    return false;
+                                } else if (!isCuda
                                         && name.contains("nvrtc")
                                         && name.contains("cudart")
                                         && name.contains("nvTools")) {
                                     return false;
-                                }
-                                if (name.startsWith("libarm_compute_")) {
-                                    dependants.add(path);
-                                    return false;
-                                }
-                                return !loadLater.contains(name)
+                                } else if (name.startsWith("libarm_compute-")
+                                        || name.startsWith("libopenblasp")) {
+                                    rank.put(path, 2);
+                                    return true;
+                                } else if (name.startsWith("libarm_compute_")) {
+                                    rank.put(path, 3);
+                                    return true;
+                                } else if (!loadLater.contains(name)
                                         && Files.isRegularFile(path)
                                         && !name.endsWith(JNI_LIB_NAME)
                                         && !name.contains("torch_")
                                         && !name.contains("caffe2_")
-                                        && !name.startsWith("cudnn");
+                                        && !name.startsWith("cudnn")) {
+                                    rank.put(path, 1);
+                                    return true;
+                                }
+                                return false;
                             })
+                    .sorted(Comparator.comparingInt(rank::get))
                     .map(Path::toString)
                     .forEach(LibUtils::loadNativeLibrary);
-            for (Path dep : dependants) {
-                loadNativeLibrary(dep.toAbsolutePath().toString());
-            }
 
             if (Files.exists((libDir.resolve("cudnn64_8.dll")))) {
                 loadNativeLibrary(libDir.resolve("cudnn64_8.dll").toString());
@@ -212,10 +234,21 @@ public final class LibUtils {
         String djlVersion = libTorch.apiVersion;
         String flavor = libTorch.flavor;
 
+        // Looking for JNI in libTorch.dir first
+        Path libDir = libTorch.dir.toAbsolutePath();
+        Path path = libDir.resolve(djlVersion + '-' + JNI_LIB_NAME);
+        if (Files.exists(path)) {
+            return path;
+        }
+        path = libDir.resolve(JNI_LIB_NAME);
+        if (Files.exists(path)) {
+            return path;
+        }
+
         // always use cache dir, cache dir might be different from libTorch.dir
         Path cacheDir = Utils.getEngineCacheDir("pytorch");
         Path dir = cacheDir.resolve(version + '-' + flavor + '-' + classifier);
-        Path path = dir.resolve(djlVersion + '-' + JNI_LIB_NAME);
+        path = dir.resolve(djlVersion + '-' + JNI_LIB_NAME);
         if (Files.exists(path)) {
             return path;
         }
@@ -289,6 +322,7 @@ public final class LibUtils {
     }
 
     private static LibTorch copyNativeLibraryFromClasspath(Platform platform) {
+        logger.debug("Found bundled PyTorch package: {}.", platform);
         String version = platform.getVersion();
         String flavor = platform.getFlavor();
         if (!flavor.endsWith("-precxx11")
@@ -313,15 +347,7 @@ public final class LibUtils {
             if (!m.matches()) {
                 throw new AssertionError("Unexpected version: " + version);
             }
-            String[] versions = m.group(1).split("\\.");
-            int minorVersion = Integer.parseInt(versions[1]);
-            int buildVersion = Integer.parseInt(versions[2]);
-            String pathPrefix;
-            if (minorVersion > 10 || (minorVersion == 10 && buildVersion == 2)) {
-                pathPrefix = "pytorch/" + flavor + '/' + classifier;
-            } else {
-                pathPrefix = "native/lib";
-            }
+            String pathPrefix = "pytorch/" + flavor + '/' + classifier;
 
             Files.createDirectories(cacheDir);
             tmp = Files.createTempDirectory(cacheDir, "tmp");
@@ -349,8 +375,9 @@ public final class LibUtils {
         String nativeHelper = System.getProperty("ai.djl.pytorch.native_helper");
         if (nativeHelper != null && !nativeHelper.isEmpty()) {
             ClassLoaderUtils.nativeLoad(nativeHelper, path);
+        } else {
+            System.load(path); // NOPMD
         }
-        System.load(path); // NOPMD
     }
 
     private static LibTorch downloadPyTorch(Platform platform) {
@@ -358,6 +385,7 @@ public final class LibUtils {
         String classifier = platform.getClassifier();
         String precxx11;
         String flavor = Utils.getEnvOrSystemProperty("PYTORCH_FLAVOR");
+        boolean override;
         if (flavor == null || flavor.isEmpty()) {
             flavor = platform.getFlavor();
             if (System.getProperty("os.name").startsWith("Linux")
@@ -368,9 +396,11 @@ public final class LibUtils {
                 precxx11 = "";
             }
             flavor += precxx11;
+            override = false;
         } else {
             logger.info("Uses override PYTORCH_FLAVOR: {}", flavor);
             precxx11 = flavor.endsWith("-precxx11") ? "-precxx11" : "";
+            override = true;
         }
 
         Path cacheDir = Utils.getEngineCacheDir("pytorch");
@@ -407,23 +437,32 @@ public final class LibUtils {
             Files.createDirectories(cacheDir);
             List<String> lines = Utils.readLines(is);
             if (flavor.startsWith("cu")) {
-                String cudaMajor = flavor.substring(0, 4);
+                int cudaVersion = Integer.parseInt(flavor.substring(2, 5));
                 Pattern pattern =
                         Pattern.compile(
-                                '('
-                                        + cudaMajor
-                                        + "\\d"
+                                "cu(\\d\\d\\d)"
                                         + precxx11
-                                        + ")/"
+                                        + '/'
                                         + classifier
                                         + "/native/lib/"
                                         + NATIVE_LIB_NAME
                                         + ".gz");
+                List<Integer> cudaVersions = new ArrayList<>();
                 boolean match = false;
                 for (String line : lines) {
                     Matcher m = pattern.matcher(line);
                     if (m.matches()) {
-                        flavor = m.group(1);
+                        cudaVersions.add(Integer.parseInt(m.group(1)));
+                    }
+                }
+                // find highest matching CUDA version
+                cudaVersions.sort(Collections.reverseOrder());
+                for (int cuda : cudaVersions) {
+                    if (override && cuda == cudaVersion) {
+                        match = true;
+                        break;
+                    } else if (cuda <= cudaVersion) {
+                        flavor = "cu" + cuda + precxx11;
                         match = true;
                         break;
                     }
@@ -529,8 +568,10 @@ public final class LibUtils {
             if (flavor == null || flavor.isEmpty()) {
                 if (CudaUtils.getGpuCount() > 0) {
                     flavor = "cu" + CudaUtils.getCudaVersionString() + "-precxx11";
-                } else {
+                } else if ("linux".equals(platform.getOsPrefix())) {
                     flavor = "cpu-precxx11";
+                } else {
+                    flavor = "cpu";
                 }
             }
         }

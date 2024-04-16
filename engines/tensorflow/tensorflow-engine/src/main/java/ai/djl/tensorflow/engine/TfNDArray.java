@@ -459,6 +459,12 @@ public class TfNDArray extends NativeResource<TFE_TensorHandle> implements NDArr
 
     /** {@inheritDoc} */
     @Override
+    public NDArray erf() {
+        return manager.opExecutor("Erf").addInput(this).buildSingletonOrThrow();
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public NDArray norm(boolean keepDims) {
         // We have to flatten first to be able to simulate "numpy.linalg.norm" whenever axis isn't
         // specified
@@ -913,6 +919,12 @@ public class TfNDArray extends NativeResource<TFE_TensorHandle> implements NDArr
 
     /** {@inheritDoc} */
     @Override
+    public NDArray atan2(NDArray other) {
+        return manager.opExecutor("Atan2").addInput(this).addInput(other).buildSingletonOrThrow();
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public NDArray sinh() {
         return manager.opExecutor("Sinh").addInput(this).buildSingletonOrThrow();
     }
@@ -1169,6 +1181,18 @@ public class TfNDArray extends NativeResource<TFE_TensorHandle> implements NDArr
             NDArray window,
             boolean normalize,
             boolean returnComplex) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray fft2(long[] sizes, long[] axes) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray ifft2(long[] sizes, long[] axes) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -1638,6 +1662,12 @@ public class TfNDArray extends NativeResource<TFE_TensorHandle> implements NDArr
                     .addInput(axisArr)
                     .buildSingletonOrThrow();
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDList topK(int k, int axis, boolean largest, boolean sorted) {
+        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     /** {@inheritDoc} */

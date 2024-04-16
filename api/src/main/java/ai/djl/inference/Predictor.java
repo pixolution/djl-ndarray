@@ -16,6 +16,8 @@ import ai.djl.Device;
 import ai.djl.Model;
 import ai.djl.inference.streaming.StreamingBlock;
 import ai.djl.inference.streaming.StreamingTranslator;
+import ai.djl.inference.streaming.StreamingTranslator.StreamOutput;
+import ai.djl.metric.Dimension;
 import ai.djl.metric.Metrics;
 import ai.djl.metric.Unit;
 import ai.djl.ndarray.LazyNDArray;
@@ -32,7 +34,9 @@ import ai.djl.translate.TranslatorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -59,14 +63,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <ul>
  *   <li><a
- *       href="https://github.com/deepjavalibrary/djl/blob/master/jupyter/tutorial/03_image_classification_with_your_model.ipynb">Inference
+ *       href="http://docs.djl.ai/docs/demos/jupyter/tutorial/03_image_classification_with_your_model.html">Inference
  *       with a custom trained model</a>
  *   <li><a
- *       href="https://github.com/deepjavalibrary/djl/blob/master/jupyter/object_detection_with_model_zoo.ipynb">Inference
+ *       href="http://docs.djl.ai/docs/demos/jupyter/object_detection_with_model_zoo.html">Inference
  *       with a model zoo model</a>
- *   <li><a
- *       href="https://github.com/deepjavalibrary/djl/blob/master/jupyter/load_mxnet_model.ipynb">Inference
- *       with an MXNet model</a>
+ *   <li><a href="http://docs.djl.ai/docs/demos/jupyter/load_mxnet_model.html">Inference with an
+ *       MXNet model</a>
  * </ul>
  *
  * @param <I> the input type
@@ -84,15 +87,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Predictor<I, O> implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(Predictor.class);
-    private Translator<I, O> translator;
-    private long timestamp;
 
-    private boolean prepared;
-    private Model model;
+    protected Translator<I, O> translator;
+    protected long timestamp;
+
+    protected boolean prepared;
+    protected Model model;
     protected NDManager manager;
     protected Metrics metrics;
     protected Block block;
     protected ParameterStore parameterStore;
+    protected Dimension dimension;
 
     /**
      * Creates a new instance of {@code BasePredictor} with the given {@link Model} and {@link
@@ -115,6 +120,7 @@ public class Predictor<I, O> implements AutoCloseable {
         this.translator = translator;
         block = model.getBlock();
         parameterStore = new ParameterStore(manager, copy);
+        dimension = new Dimension("Model", model.getProperty("metric_dimension", "model"));
     }
 
     /**
@@ -149,42 +155,46 @@ public class Predictor<I, O> implements AutoCloseable {
      * @return a list of output objects defined by the user
      * @throws TranslateException if an error occurs during prediction
      */
-    @SuppressWarnings({"PMD.AvoidRethrowingException", "PMD.IdenticalCatchBranches"})
+    @SuppressWarnings({"PMD.AvoidRethrowingException", "PMD.IdenticalCatchBranches", "unchecked"})
     public List<O> batchPredict(List<I> inputs) throws TranslateException {
-        long begin = System.nanoTime();
         try (PredictorContext context = new PredictorContext()) {
             if (!prepared) {
                 translator.prepare(context);
                 prepared = true;
             }
-            Batchifier batchifier = translator.getBatchifier();
-            if (batchifier == null) {
+            Translator<I[], O[]> batchTranslator = translator.toBatchTranslator();
+            if (batchTranslator == null) {
                 List<O> ret = new ArrayList<>(inputs.size());
                 for (I input : inputs) {
                     timestamp = System.nanoTime();
-                    begin = timestamp;
+                    long begin = timestamp;
                     NDList ndList = translator.processInput(context, input);
-                    preprocessEnd(ndList);
+                    preprocessEnd(ndList, 1);
 
                     NDList result = predictInternal(context, ndList);
-                    predictEnd(result);
+                    predictEnd(result, 1);
 
                     ret.add(translator.processOutput(context, result));
-                    postProcessEnd(begin);
+                    postProcessEnd(begin, 1);
                 }
                 return ret;
             }
 
+            int batchSize = inputs.size();
+            I[] empty = (I[]) Array.newInstance(inputs.get(0).getClass(), 0);
+            I[] in = inputs.toArray(empty);
+
             timestamp = System.nanoTime();
-            NDList inputBatch = processInputs(context, inputs);
-            preprocessEnd(inputBatch);
+            long begin = timestamp;
+            NDList ndList = batchTranslator.processInput(context, in);
+            preprocessEnd(ndList, batchSize);
 
-            NDList result = predictInternal(context, inputBatch);
-            predictEnd(result);
+            NDList result = predictInternal(context, ndList);
+            predictEnd(result, batchSize);
 
-            List<O> ret = processOutputs(context, result);
-            postProcessEnd(begin);
-            return ret;
+            O[] ret = batchTranslator.processOutput(context, result);
+            postProcessEnd(begin, batchSize);
+            return Arrays.asList(ret);
         } catch (TranslateException e) {
             throw e;
         } catch (Exception e) {
@@ -200,18 +210,14 @@ public class Predictor<I, O> implements AutoCloseable {
      * @throws TranslateException if an error occurs during prediction
      */
     @SuppressWarnings({"PMD.AvoidRethrowingException", "PMD.IdenticalCatchBranches"})
-    public O streamingPredict(I input) throws TranslateException {
+    public StreamOutput<O> streamingPredict(I input) throws TranslateException {
 
-        if (!(block instanceof StreamingBlock)) {
-            throw new IllegalStateException(
-                    "streamingPredict() can only be called with a StreamingBlock");
+        String streamingSupported = streamingSupportError();
+        if (streamingSupported != null) {
+            throw new IllegalStateException(streamingSupported);
         }
+
         StreamingBlock streamingBlock = (StreamingBlock) block;
-
-        if (!(translator instanceof StreamingTranslator)) {
-            throw new IllegalStateException(
-                    "streamingPredict() can only be called with a StreamingTranslator");
-        }
         StreamingTranslator<I, O> streamingTranslator = (StreamingTranslator<I, O>) translator;
 
         try {
@@ -257,6 +263,25 @@ public class Predictor<I, O> implements AutoCloseable {
     }
 
     /**
+     * Returns true if streaming is supported by the predictor, block, and translator.
+     *
+     * @return true if streaming is supported by the predictor, block, and translator
+     */
+    public boolean supportsStreaming() {
+        return streamingSupportError() == null;
+    }
+
+    private String streamingSupportError() {
+        if (!(block instanceof StreamingBlock)) {
+            return "streamingPredict() can only be called with a StreamingBlock";
+        }
+        if (!(translator instanceof StreamingTranslator)) {
+            return "streamingPredict() can only be called with a StreamingTranslator";
+        }
+        return null;
+    }
+
+    /**
      * Attaches a Metrics param to use for benchmark.
      *
      * @param metrics the Metrics class
@@ -283,43 +308,34 @@ public class Predictor<I, O> implements AutoCloseable {
         return translator.getBatchifier().batchify(preprocessed);
     }
 
-    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
-    private List<O> processOutputs(TranslatorContext ctx, NDList list) throws Exception {
-        NDList[] unbatched = translator.getBatchifier().unbatchify(list);
-        List<O> outputs = new ArrayList<>(unbatched.length);
-        for (NDList output : unbatched) {
-            outputs.add(translator.processOutput(ctx, output));
-        }
-        return outputs;
-    }
-
-    private void preprocessEnd(NDList list) {
+    private void preprocessEnd(NDList list, int batchSize) {
         if (metrics != null) {
             waitToRead(list);
             long tmp = System.nanoTime();
-            long duration = (tmp - timestamp) / 1000;
+            long duration = (tmp - timestamp) / 1000 / batchSize;
             timestamp = tmp;
-            metrics.addMetric("Preprocess", duration, Unit.MICROSECONDS);
+            metrics.addMetric("Preprocess", duration, Unit.MICROSECONDS, dimension);
         }
     }
 
-    private void predictEnd(NDList list) {
+    private void predictEnd(NDList list, int batchSize) {
         if (metrics != null) {
             waitToRead(list);
             long tmp = System.nanoTime();
-            long duration = (tmp - timestamp) / 1000;
+            long duration = (tmp - timestamp) / 1000 / batchSize;
             timestamp = tmp;
-            metrics.addMetric("Inference", duration, Unit.MICROSECONDS);
+            metrics.addMetric("Inference", duration, Unit.MICROSECONDS, dimension);
         }
     }
 
-    private void postProcessEnd(long begin) {
+    private void postProcessEnd(long begin, int batchSize) {
         if (metrics != null) {
             long tmp = System.nanoTime();
-            long duration = (tmp - timestamp) / 1000;
+            long duration = (tmp - timestamp) / 1000 / batchSize;
             timestamp = tmp;
-            metrics.addMetric("Postprocess", duration, Unit.MICROSECONDS);
-            metrics.addMetric("Total", (tmp - begin) / 1000, Unit.MICROSECONDS);
+            metrics.addMetric("Postprocess", duration, Unit.MICROSECONDS, dimension);
+            long prediction = (tmp - begin) / 1000;
+            metrics.addMetric("Prediction", prediction, Unit.MICROSECONDS, dimension);
         }
     }
 
@@ -342,12 +358,13 @@ public class Predictor<I, O> implements AutoCloseable {
         super.finalize();
     }
 
-    private class PredictorContext implements TranslatorContext {
+    protected class PredictorContext implements TranslatorContext {
 
         private NDManager ctxManager;
         private Map<String, Object> attachments;
 
-        PredictorContext() {
+        /** Constructs a new {@code PredictorContext} instance. */
+        public PredictorContext() {
             ctxManager = manager.newSubManager();
             ctxManager.setName("predictor ctx");
             attachments = new ConcurrentHashMap<>();

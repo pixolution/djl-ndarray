@@ -53,6 +53,7 @@ public abstract class BaseNDManager implements NDManager {
     protected AtomicBoolean closed = new AtomicBoolean(false);
     protected AtomicBoolean capped = new AtomicBoolean(false);
 
+    @SuppressWarnings("this-escape")
     protected BaseNDManager(NDManager parent, Device device) {
         this.parent = parent;
         this.device = device == null ? defaultDevice() : device;
@@ -303,11 +304,14 @@ public abstract class BaseNDManager implements NDManager {
 
     /** {@inheritDoc} */
     @Override
-    public synchronized void attachInternal(String resourceId, AutoCloseable resource) {
+    public synchronized void attachInternal(String resourceId, AutoCloseable... resources) {
         if (capped.get()) {
             throw new IllegalStateException("NDManager is capped for addition of resources.");
         }
-        attachUncappedInternal(resourceId, resource);
+        for (int i = 0; i < resources.length; i++) {
+            attachUncappedInternal(
+                    resources.length == 1 ? resourceId : resourceId + "_" + i, resources[i]);
+        }
     }
 
     /** {@inheritDoc} */
@@ -440,7 +444,7 @@ public abstract class BaseNDManager implements NDManager {
     public static void validateBuffer(Buffer buffer, DataType dataType, int expected) {
         boolean isByteBuffer = buffer instanceof ByteBuffer;
         DataType type = DataType.fromBuffer(buffer);
-        if (type != dataType && !isByteBuffer) {
+        if (!isCompatible(type, dataType) && !isByteBuffer) {
             // It's ok if type != datatype and buffer is ByteBuffer,
             // since buffer will be copied into ByteBuffer
             throw new IllegalArgumentException(
@@ -462,6 +466,20 @@ public abstract class BaseNDManager implements NDManager {
                             + " explicitly.");
             buffer.limit(expectedSize);
         }
+    }
+
+    private static boolean isCompatible(DataType type1, DataType type2) {
+        if (type1.getNumOfBytes() != type1.getNumOfBytes()) {
+            return false;
+        }
+        if (type1.getNumOfBytes() == 2) {
+            // fp16, bf16, int16, uint16 all uses ShortBuffer
+            return true;
+        }
+        if (type1.getFormat() == type2.getFormat()) {
+            return true;
+        }
+        return type1.isInteger() && type2.isInteger();
     }
 
     /**

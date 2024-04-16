@@ -1,8 +1,10 @@
-configure([
+def projects = [
         project(':api'),
         project(':engines:tensorflow:tensorflow-api'),
-        project(':engines:tensorflow:tensorflow-engine')
-        ]) {
+        project(':engines:tensorflow:tensorflow-engine'),
+]
+
+configure(projects) {
     apply plugin: "maven-publish"
     apply plugin: "signing"
 

@@ -6,7 +6,7 @@ In this example, you learn how to implement inference code with Deep Java Librar
 
 The image classification example code can be found at [ImageClassification.java](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/ImageClassification.java).
 
-You can also use the [Jupyter notebook tutorial](../../jupyter/tutorial/03_image_classification_with_your_model.ipynb).
+You can also use the [Jupyter notebook tutorial](http://docs.djl.ai/docs/demos/jupyter/tutorial/03_image_classification_with_your_model.html).
 The Jupyter notebook explains the key concepts in detail.
 
 ## Setup Guide
@@ -30,7 +30,7 @@ You can find the following image in your project test resource folder: `src/test
 
 Run the project by using the following command:
 
-```
+```sh
 cd examples
 ./gradlew run -Dmain=ai.djl.examples.inference.ImageClassification
 ```
@@ -39,11 +39,11 @@ Your output should look like the following:
 
 ```text
 [INFO ] - [
-        class: "0", probability: 0.99996
-        class: "2", probability: 0.00002
-        class: "6", probability: 5.4e-06
-        class: "9", probability: 2.5e-06
-        class: "8", probability: 8.5e-07
+	{"class": "0", "probability": 0.99997}
+	{"class": "2", "probability": 0.00002}
+	{"class": "8", "probability": 2.0e-06}
+	{"class": "9", "probability": 1.6e-06}
+	{"class": "6", "probability": 6.9e-07}
 ]
 ```
 

@@ -13,6 +13,7 @@
 package ai.djl.testing;
 
 import ai.djl.engine.Engine;
+import ai.djl.util.Utils;
 
 import org.testng.SkipException;
 
@@ -24,6 +25,7 @@ import java.util.Calendar;
  * <p>When the test requirements are not fulfilled, the test is skipped with a {@link
  * SkipException}.
  */
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
 public final class TestRequirements {
 
     private TestRequirements() {}
@@ -44,7 +46,7 @@ public final class TestRequirements {
 
     /** Requires a test not be run in offline mode. */
     public static void notOffline() {
-        if (Boolean.getBoolean("offline")) {
+        if (Utils.isOfflineMode()) {
             throw new SkipException("This test can not run while offline");
         }
     }

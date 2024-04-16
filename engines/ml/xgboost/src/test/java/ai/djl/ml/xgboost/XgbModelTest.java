@@ -42,7 +42,6 @@ public class XgbModelTest {
 
     @BeforeClass
     public void downloadXGBoostModel() throws IOException {
-        TestRequirements.notArm();
         TestRequirements.notWindows();
 
         Path modelDir = Paths.get("build/model");
@@ -54,7 +53,7 @@ public class XgbModelTest {
     @Test
     public void testVersion() {
         Engine engine = Engine.getEngine("XGBoost");
-        Assert.assertEquals("1.7.3", engine.getVersion());
+        Assert.assertEquals("2.0.3", engine.getVersion());
     }
 
     /*
@@ -94,6 +93,7 @@ public class XgbModelTest {
         try (XgbNDManager manager =
                 (XgbNDManager) XgbNDManager.getSystemManager().newSubManager()) {
             manager.setMissingValue(Float.NaN);
+            manager.setNthread(1);
             NDArray zeros = manager.zeros(new Shape(1, 2));
             Assert.expectThrows(UnsupportedOperationException.class, zeros::toFloatArray);
 

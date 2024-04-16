@@ -8,7 +8,7 @@ Use of these classes will couple your code with PyTorch and make switching betwe
 
 ## Documentation
 
-The latest javadocs can be found on [here](https://javadoc.io/doc/ai.djl.pytorch/pytorch-engine/latest/index.html).
+The latest javadocs can be found [here](https://javadoc.io/doc/ai.djl.pytorch/pytorch-engine/latest/index.html).
 
 You can also build the latest javadocs locally using the following command:
 
@@ -24,13 +24,13 @@ The javadocs output is built in the `build/doc/javadoc` folder.
 ## Installation
 You can pull the PyTorch engine from the central Maven repository by including the following dependency:
 
-- ai.djl.pytorch:pytorch-engine:0.21.0
+- ai.djl.pytorch:pytorch-engine:0.27.0
 
 ```xml
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-engine</artifactId>
-    <version>0.21.0</version>
+    <version>0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -46,10 +46,17 @@ The following table illustrates which pytorch version that DJL supports:
 
 | PyTorch engine version | PyTorch native library version            |
 |------------------------|-------------------------------------------|
-| pytorch-engine:0.21.0  | 1.11.0, 1.12.1, 1.13.1                    |
-| pytorch-engine:0.20.0  | 1.11.0, 1.12.1, 1.13.0                    |
-| pytorch-engine:0.19.0  | 1.10.0, 1.11.0, 1.12.1                    |
-| pytorch-engine:0.18.0  | 1.9.1, 1.10.0, 1.11.0                     |
+| pytorch-engine:0.28.0  | 1.13.1, **2.1.2**                         |
+| pytorch-engine:0.27.0  | 1.13.1, **2.1.1**                         |
+| pytorch-engine:0.26.0  | 1.13.1, 2.0.1, **2.1.1**                  |
+| pytorch-engine:0.25.0  | 1.11.0, 1.12.1, **1.13.1**, 2.0.1         |
+| pytorch-engine:0.24.0  | 1.11.0, 1.12.1, **1.13.1**, 2.0.1         |
+| pytorch-engine:0.23.0  | 1.11.0, 1.12.1, **1.13.1**, 2.0.1         |
+| pytorch-engine:0.22.1  | 1.11.0, 1.12.1, **1.13.1**, 2.0.0         |
+| pytorch-engine:0.21.0  | 1.11.0, 1.12.1, **1.13.1**                |
+| pytorch-engine:0.20.0  | 1.11.0, 1.12.1, **1.13.0**                |
+| pytorch-engine:0.19.0  | 1.10.0, 1.11.0, **1.12.1**                |
+| pytorch-engine:0.18.0  | 1.9.1, 1.10.0, **1.11.0**                 |
 | pytorch-engine:0.17.0  | 1.9.1, 1.10.0, 1.11.0                     |
 | pytorch-engine:0.16.0  | 1.8.1, 1.9.1, 1.10.0                      |
 | pytorch-engine:0.15.0  | pytorch-native-auto: 1.8.1, 1.9.1, 1.10.0 |
@@ -75,7 +82,7 @@ It will automatically determine the appropriate jars for your system based on th
 If you are running on an older operating system (like CentOS 7), you have to use
 [precxx11 build](#for-pre-cxx11-build) or set system property to auto select for precxx11 binary:
 
-```
+```java
 System.setProperty("PYTORCH_PRECXX11", "true");
 ```
 
@@ -108,45 +115,45 @@ export PYTORCH_FLAVOR=cpu
 ### macOS
 For macOS, you can use the following library:
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cpu:1.13.1:osx-x86_64
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cpu:2.1.1:osx-x86_64
 
 ```xml
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-native-cpu</artifactId>
     <classifier>osx-x86_64</classifier>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
 
-**Note:** PyTorch 1.13+ doesn't support mac 11 any more.
+**Note:** PyTorch 1.13+ doesn't support mac 11 any more, you must use DJL 0.19.0 ane lower version.
 
 ### macOS M1
 For macOS M1, you can use the following library:
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cpu:1.13.1:osx-aarch64
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cpu:2.1.1:osx-aarch64
 
 ```xml
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-native-cpu</artifactId>
     <classifier>osx-aarch64</classifier>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -157,29 +164,29 @@ installed on your GPU machine, you can use one of the following library:
 
 #### Linux GPU
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cu117:1.13.1:linux-x86_64 - CUDA 11.7
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cu121:2.1.1:linux-x86_64 - CUDA 12.1
 
 ```xml
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
-    <artifactId>pytorch-native-cu117</artifactId>
+    <artifactId>pytorch-native-cu121</artifactId>
     <classifier>linux-x86_64</classifier>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
 
 ### Linux CPU
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cpu:1.13.1:linux-x86_64
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cpu:2.1.1:linux-x86_64
 
 ```xml
 <dependency>
@@ -187,20 +194,20 @@ installed on your GPU machine, you can use one of the following library:
     <artifactId>pytorch-native-cpu</artifactId>
     <classifier>linux-x86_64</classifier>
     <scope>runtime</scope>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
 
 ### For aarch64 build
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cpu-precxx11:1.13.1:linux-aarch64
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cpu-precxx11:2.1.1:linux-aarch64
 
 ```xml
 <dependency>
@@ -208,12 +215,12 @@ installed on your GPU machine, you can use one of the following library:
     <artifactId>pytorch-native-cpu-precxx11</artifactId>
     <classifier>linux-aarch64</classifier>
     <scope>runtime</scope>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -223,22 +230,22 @@ installed on your GPU machine, you can use one of the following library:
 We also provide packages for the system like CentOS 7/Ubuntu 14.04 with GLIBC >= 2.17.
 All the package were built with GCC 7, we provided a newer `libstdc++.so.6.24` in the package that contains `CXXABI_1.3.9` to use the package successfully.
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cu117-precxx11:1.13.1:linux-x86_64 - CUDA 11.7
-- ai.djl.pytorch:pytorch-native-cpu-precxx11:1.13.1:linux-x86_64   - CPU
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cu121-precxx11:2.1.1:linux-x86_64 - CUDA 12.1
+- ai.djl.pytorch:pytorch-native-cpu-precxx11:2.1.1:linux-x86_64   - CPU
 
 ```xml
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
-    <artifactId>pytorch-native-cu117-precxx11</artifactId>
+    <artifactId>pytorch-native-cu121-precxx11</artifactId>
     <classifier>linux-x86_64</classifier>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -248,13 +255,13 @@ All the package were built with GCC 7, we provided a newer `libstdc++.so.6.24` i
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-native-cpu-precxx11</artifactId>
     <classifier>linux-x86_64</classifier>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -269,29 +276,29 @@ For the Windows platform, you can choose between CPU and GPU.
 
 #### Windows GPU
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cu117:1.13.1:win-x86_64 - CUDA 11.7
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cu121:2.1.1:win-x86_64 - CUDA 12.1
 
 ```xml
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
-    <artifactId>pytorch-native-cu117</artifactId>
+    <artifactId>pytorch-native-cu121</artifactId>
     <classifier>win-x86_64</classifier>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
 
 ### Windows CPU
 
-- ai.djl.pytorch:pytorch-jni:1.13.1-0.21.0
-- ai.djl.pytorch:pytorch-native-cpu:1.13.1:win-x86_64
+- ai.djl.pytorch:pytorch-jni:2.1.1-0.27.0
+- ai.djl.pytorch:pytorch-native-cpu:2.1.1:win-x86_64
 
 ```xml
 <dependency>
@@ -299,12 +306,12 @@ For the Windows platform, you can choose between CPU and GPU.
     <artifactId>pytorch-native-cpu</artifactId>
     <classifier>win-x86_64</classifier>
     <scope>runtime</scope>
-    <version>1.13.1</version>
+    <version>2.1.1</version>
 </dependency>
 <dependency>
     <groupId>ai.djl.pytorch</groupId>
     <artifactId>pytorch-jni</artifactId>
-    <version>1.13.1-0.21.0</version>
+    <version>2.1.1-0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```

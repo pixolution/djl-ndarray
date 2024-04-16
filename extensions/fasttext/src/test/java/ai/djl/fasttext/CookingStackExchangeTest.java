@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,7 +58,6 @@ public class CookingStackExchangeTest {
     @BeforeClass
     public void setUp() {
         TestRequirements.notWindows(); // fastText is not supported on windows
-        TestRequirements.notArm();
     }
 
     @Test
@@ -130,7 +130,9 @@ public class CookingStackExchangeTest {
     public void testBlazingText() throws IOException, ModelException {
         TestRequirements.nightly();
 
-        URL url = new URL("https://resources.djl.ai/test-models/blazingtext_classification.bin");
+        URL url =
+                URI.create("https://resources.djl.ai/test-models/blazingtext_classification.bin")
+                        .toURL();
         Path path = Paths.get("build/tmp/model");
         Path modelFile = path.resolve("text_classification.bin");
         if (!Files.exists(modelFile)) {

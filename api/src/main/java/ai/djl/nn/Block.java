@@ -105,7 +105,7 @@ import java.util.function.Predicate;
  * further refine these elements, use {@link Block#freezeParameters(boolean)} to unfreeze them.
  *
  * @see <a
- *     href="https://github.com/deepjavalibrary/djl/blob/master/jupyter/tutorial/01_create_your_first_network.ipynb">this
+ *     href="http://docs.djl.ai/docs/demos/jupyter/tutorial/01_create_your_first_network.html">this
  *     tutorial on creating your first network</a>
  * @see <a href="https://d2l.djl.ai/chapter_deep-learning-computation/model-construction.html">The
  *     D2L chapter on blocks</a> and <a
@@ -310,6 +310,21 @@ public interface Block {
     default void freezeParameters(boolean freeze) {
         for (Parameter parameter : getParameters().values()) {
             parameter.freeze(freeze);
+        }
+    }
+
+    /**
+     * Freezes or unfreezes all parameters inside the block that pass the predicate.
+     *
+     * @param freeze true to mark as frozen rather than unfrozen
+     * @param pred true tests if the parameter should be updated
+     * @see Parameter#freeze(boolean)
+     */
+    default void freezeParameters(boolean freeze, Predicate<Parameter> pred) {
+        for (Parameter parameter : getParameters().values()) {
+            if (pred.test(parameter)) {
+                parameter.freeze(freeze);
+            }
         }
     }
 

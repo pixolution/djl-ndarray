@@ -1,4 +1,4 @@
-## How to convert your PyTorch model to TorchScript
+# How to convert your PyTorch model to TorchScript
 
 There are two ways to convert your model to TorchScript: tracing and scripting.
 We will only demonstrate the first one, tracing, but you can find information about scripting from the PyTorch documentation.
@@ -64,7 +64,7 @@ You can trace by using the `torch.traceModule` function.
 
 To run inference with such model in DJL, you could provide a placeholder NDArray like below:
 
-```
+```java
 NDArray array = NDManager.create("");
 array.setName("module_method:get_text_features");
 ```

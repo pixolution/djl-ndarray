@@ -358,6 +358,20 @@ public final class Utils {
     }
 
     /**
+     * Returns if offline mode is enabled.
+     *
+     * @return true if offline mode is enabled
+     */
+    public static boolean isOfflineMode() {
+        String mode = getenv("DJL_OFFLINE", System.getProperty("ai.djl.offline"));
+        if (mode != null) {
+            return Boolean.parseBoolean(mode);
+        }
+        // backward compatible
+        return Boolean.getBoolean("offline");
+    }
+
+    /**
      * Returns nested model directory if the directory contains only one subdirectory.
      *
      * @param modelDir the model directory
@@ -388,7 +402,32 @@ public final class Utils {
      * @return the string value of the variable or system property
      */
     public static String getEnvOrSystemProperty(String name) {
-        return getenv(name, System.getProperty(name));
+        return getEnvOrSystemProperty(name, null);
+    }
+
+    /**
+     * Gets the value of the specified environment variable or system property.
+     *
+     * @param name the name of the environment variable
+     * @param def a default value
+     * @return the string value of the variable or system property
+     */
+    public static String getEnvOrSystemProperty(String name, String def) {
+        try {
+            String env = System.getenv(name);
+            if (env != null) {
+                return env;
+            }
+        } catch (SecurityException e) {
+            logger.warn("Security manager doesn't allow access to the environment variable");
+        }
+
+        String prop = System.getProperty(name);
+        if (prop != null) {
+            return prop;
+        }
+
+        return def;
     }
 
     /**
@@ -456,7 +495,7 @@ public final class Utils {
      */
     public static InputStream openUrl(URL url) throws IOException {
         String protocol = url.getProtocol();
-        if (Boolean.getBoolean("offline")
+        if (isOfflineMode()
                 && ("http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol))) {
             throw new IOException("Offline model is enabled.");
         }

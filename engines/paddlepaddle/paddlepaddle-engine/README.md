@@ -30,7 +30,7 @@ You can pull the PaddlePaddle engine from the central Maven repository by includ
 <dependency>
     <groupId>ai.djl.paddlepaddle</groupId>
     <artifactId>paddlepaddle-engine</artifactId>
-    <version>0.21.0</version>
+    <version>0.27.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -73,7 +73,7 @@ For macOS, you can use the following library:
 
 To use Linux packages, users are also required to set `LD_LIBRARY_PATH` to the folder:
 
-```
+```sh
 LD_LIBRARY_PATH=$HOME/.djl.ai/paddle/2.2.2-<cuda-flavor>-linux-x86_64
 ```
 

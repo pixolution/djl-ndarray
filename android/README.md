@@ -14,9 +14,9 @@ The minimum API level for DJL Android is 26.
 
 In gradle, you can add the 5 modules in your dependencies:
 
-```
+```groovy
 dependencies {
-    implementation platform("ai.djl:bom:0.21.0")
+    implementation platform("ai.djl:bom:0.27.0")
 
     implementation "ai.djl:api"
     implementation "ai.djl.android:core"

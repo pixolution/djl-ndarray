@@ -10,13 +10,13 @@ you can use the $JAVA_HOME environment variable to control which version of Java
 For ubuntu:
 
 ```bash
-sudo apt-get install openjdk-11-jdk
+sudo apt-get install openjdk-17-jdk
 ```
 
 For centos
 
 ```bash
-sudo yum install java-11-openjdk
+sudo yum install java-17-openjdk
 ```
 
 For Mac:
@@ -24,7 +24,7 @@ For Mac:
 ```bash
 brew tap homebrew/cask-versions
 brew update
-brew install --cask temurin11
+brew install --cask zulu17
 ```
 
 You can also download and install [Oracle JDK](https://www.oracle.com/technetwork/java/javase/overview/index.html)
@@ -45,3 +45,10 @@ You can use the IDE of your choice. We recommend using IntelliJ.
 
 You use Gradle and Maven wrappers to build the project, so you don't need to install Gradle or Maven.
 However, you should have basic knowledge about the Gradle or Maven build system.
+
+## M1 Mac
+
+DLJ defaults to the MXNet Engine which is not supported on M1 Macs. To get your code to run on a mac use either:
+
+1. The environment variable `DJL_DEFAULT_ENGINE=PyTorch` which you can export on the command line or set in the Edit Run Configuration in Intellij. 
+2. The runtime commandline parameter `-Dai.djl.default_engine=PyTorch` which you can add to the end of the command line when running or add in the Edit Run Configuration in Intellij. 

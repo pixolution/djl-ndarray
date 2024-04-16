@@ -7,7 +7,7 @@ In this example, you learn how to implement inference code with a [ModelZoo mode
 
 The source code can be found at [ObjectDetection.java](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/ObjectDetection.java).
 
-You can also use the [Jupyter notebook tutorial](../../jupyter/object_detection_with_model_zoo.ipynb).
+You can also use the [Jupyter notebook tutorial](http://docs.djl.ai/docs/demos/jupyter/object_detection_with_model_zoo.html).
 The Jupyter notebook explains the key concepts in detail.
 
 ## Setup guide
@@ -24,7 +24,7 @@ You can find the image used in this example in the project test resource folder:
 ### Build the project and run
 Use the following command to run the project:
 
-```
+```sh
 cd examples
 ./gradlew run -Dmain=ai.djl.examples.inference.ObjectDetection
 ```
@@ -34,10 +34,10 @@ Your output should look like the following:
 ```text
 [INFO ] - Detected objects image has been saved in: build/output/detected-dog_bike_car.png
 [INFO ] - [
-          	class: "car", probability: 0.99991, bounds: [x=0.611, y=0.137, width=0.293, height=0.160]
-          	class: "bicycle", probability: 0.95385, bounds: [x=0.162, y=0.207, width=0.594, height=0.588]
-          	class: "dog", probability: 0.93752, bounds: [x=0.168, y=0.350, width=0.274, height=0.593]
-          ]
+	{"class": "car", "probability": 0.99991, "bounds": {"x"=0.611, "y"=0.137, "width"=0.293, "height"=0.160}}
+	{"class": "bicycle", "probability": 0.95385, "bounds": {"x"=0.162, "y"=0.207, "width"=0.594, "height"=0.588}}
+	{"class": "dog", "probability": 0.93752, "bounds": {"x"=0.168, "y"=0.350, "width"=0.274, "height"=0.593}}
+]
 ```
 
 An output image with bounding box will be saved as build/output/detected-dog_bike_car.png:

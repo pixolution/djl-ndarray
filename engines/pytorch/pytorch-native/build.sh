@@ -23,22 +23,22 @@ ARCH=$4
 
 if [[ ! -d "libtorch" ]]; then
   if [[ $PLATFORM == 'linux' ]]; then
-    if [[ ! "$FLAVOR" =~ ^(cpu|cu102|cu113|cu116|cu117)$ ]]; then
+    if [[ ! "$FLAVOR" =~ ^(cpu|cu102|cu113|cu116|cu117|cu118|cu121)$ ]]; then
       echo "$FLAVOR is not supported."
       exit 1
     fi
 
     if [[ $ARCH == 'aarch64' ]]; then
-      curl -s https://djl-ai.s3.amazonaws.com/publish/pytorch/${VERSION}/libtorch${AARCH64_CXX11ABI}-shared-with-deps-${VERSION}-aarch64.zip | jar xv
+      curl -s https://djl-ai.s3.amazonaws.com/publish/pytorch/${VERSION}/libtorch${AARCH64_CXX11ABI}-shared-with-deps-${VERSION}-aarch64.zip | jar xv > /dev/null
     else
-      curl -s https://download.pytorch.org/libtorch/${FLAVOR}/libtorch${CXX11ABI}-shared-with-deps-${VERSION}%2B${FLAVOR}.zip | jar xv
+      curl -s https://download.pytorch.org/libtorch/${FLAVOR}/libtorch${CXX11ABI}-shared-with-deps-${VERSION}%2B${FLAVOR}.zip | jar xv > /dev/null
     fi
 
   elif [[ $PLATFORM == 'darwin' ]]; then
     if [[ $ARCH == 'aarch64' ]]; then
-      curl -s https://djl-ai.s3.amazonaws.com/publish/pytorch/${VERSION}/libtorch-macos-${VERSION}-aarch64.zip | jar xv
+      curl -s https://djl-ai.s3.amazonaws.com/publish/pytorch/${VERSION}/libtorch-macos-${VERSION}-aarch64.zip | jar xv > /dev/null
     else
-      curl -s https://download.pytorch.org/libtorch/cpu/libtorch-macos-${VERSION}.zip | jar xv
+      curl -s https://download.pytorch.org/libtorch/cpu/libtorch-macos-${VERSION}.zip | jar xv > /dev/null
     fi
   else
     echo "$PLATFORM is not supported."
@@ -62,6 +62,12 @@ mkdir classes
 javac -sourcepath ../../pytorch-engine/src/main/java/ ../../pytorch-engine/src/main/java/ai/djl/pytorch/jni/PyTorchLibrary.java -h include -d classes
 cmake -DCMAKE_PREFIX_PATH=libtorch -DPT_VERSION=${PT_VERSION} -DUSE_CUDA=$USE_CUDA ..
 cmake --build . --config Release -- -j "${NUM_PROC}"
+if [[ "$FLAVOR" = cu* ]]; then
+  # avoid link with libcudart.so.11.0
+  sed -i -r "s/\/usr\/local\/cuda(.{5})?\/lib64\/lib(cudart|nvrtc).so//g" CMakeFiles/djl_torch.dir/link.txt
+  rm libdjl_torch.so
+  . CMakeFiles/djl_torch.dir/link.txt
+fi
 
 if [[ $PLATFORM == 'darwin' ]]; then
   install_name_tool -add_rpath @loader_path libdjl_torch.dylib

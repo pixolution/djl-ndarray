@@ -16,7 +16,7 @@ import os
 from argparse import Namespace
 from typing import List
 
-from huggingface_hub import HfApi, ModelSearchArguments
+from huggingface_hub import HfApi
 from huggingface_hub import hf_hub_download
 from huggingface_hub.hf_api import ModelInfo
 
@@ -27,7 +27,7 @@ ARCHITECTURES_2_TASK = {
     "ForMultipleChoice": "text-classification",
     "ForMaskedLM": "fill-mask",
 }
-LANGUAGES = ModelSearchArguments().language
+LANGUAGES = HfApi().get_model_tags()["language"]
 
 
 def get_lang_tags(model_info):
@@ -56,22 +56,31 @@ class HuggingfaceModels:
         self.temp_dir = f"{self.output_dir}/tmp"
 
     def list_models(self, args: Namespace) -> List[dict]:
+        import_all = os.environ.get("HF_IMPORT_ALL")
+
         api = HfApi()
         if args.model_name:
-            models = api.list_models(filter="pytorch",
-                                     search=args.model_name,
-                                     sort="downloads",
-                                     direction=-1,
-                                     limit=args.limit)
-            if not models:
-                logging.warning(f"no model found: {args.model_name}.")
+            all_models = api.list_models(search=args.model_name,
+                                         sort="downloads",
+                                         direction=-1,
+                                         limit=args.limit)
+            import_all = True
         else:
-            models = api.list_models(filter=f"{args.category},pytorch",
-                                     sort="downloads",
-                                     direction=-1,
-                                     limit=args.limit)
-            if not models:
+            all_models = api.list_models(filter=args.category,
+                                         sort="downloads",
+                                         direction=-1,
+                                         limit=args.limit)
+        models = [
+            model for model in all_models
+            if 'pytorch' in model.tags or 'safetensors' in model.tags
+        ]
+        if not models:
+            if args.model_name:
+                logging.warning(f"no model found: {args.model_name}.")
+            else:
                 logging.warning(f"no model matches category: {args.category}.")
+
+            return []
 
         ret = []
         for model_info in models:
@@ -83,7 +92,7 @@ class HuggingfaceModels:
                 continue
 
             languages = get_lang_tags(model_info)
-            if "en" not in languages:
+            if "en" not in languages and not import_all:
                 logging.warning(f"Skip non-English model: {model_id}.")
                 continue
 
@@ -93,6 +102,12 @@ class HuggingfaceModels:
                 if not args.retry_failed:
                     logging.info(f"Skip converted model: {model_id}.")
                     continue
+
+            if model_info.downloads < 50 and not import_all:
+                logging.info(
+                    f"Skip model {model_info.modelId}, downloads {model_info.downloads} < 50"
+                )
+                continue
 
             try:
                 config = hf_hub_download(repo_id=model_id,

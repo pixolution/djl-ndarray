@@ -1,4 +1,4 @@
-## Example CSV Dataset
+# Custom CSV Dataset Example
 
 If the provided Datasets don't meet your requirements, you can also easily extend our dataset to create your own customized dataset.
 
@@ -24,8 +24,8 @@ api group: 'org.apache.commons', name: 'commons-csv', version: '1.7'
 In order to extend the dataset, the following dependencies are required:
 
 ```
-api "ai.djl:api:0.21.0"
-api "ai.djl:basicdataset:0.21.0"
+api "ai.djl:api:0.27.0"
+api "ai.djl:basicdataset:0.27.0"
 ```
 
 There are four parts we need to implement for CSVDataset.

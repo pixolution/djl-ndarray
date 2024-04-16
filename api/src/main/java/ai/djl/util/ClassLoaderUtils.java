@@ -33,6 +33,10 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 
 /** A utility class that load classes from specific URLs. */
 public final class ClassLoaderUtils {
@@ -78,7 +82,11 @@ public final class ClassLoaderUtils {
                             (PrivilegedAction<ClassLoader>)
                                     () -> new URLClassLoader(urls, contextCl));
             if (className != null && !className.isEmpty()) {
-                return initClass(cl, type, className);
+                T impl = initClass(cl, type, className);
+                if (impl == null) {
+                    logger.warn("Failed to load class: {}", className);
+                }
+                return impl;
             }
 
             T implemented = scanDirectory(cl, type, classesDir);
@@ -227,6 +235,33 @@ public final class ClassLoaderUtils {
             method.invoke(null, path);
         } catch (ReflectiveOperationException e) {
             throw new IllegalArgumentException("Invalid native_helper: " + nativeHelper, e);
+        }
+    }
+
+    /**
+     * Tries to compile java classes in the directory.
+     *
+     * @param dir the directory to scan java file.
+     */
+    public static void compileJavaClass(Path dir) {
+        try {
+            if (!Files.isDirectory(dir)) {
+                logger.debug("Directory not exists: {}", dir);
+                return;
+            }
+            String[] files;
+            try (Stream<Path> stream = Files.walk(dir)) {
+                files =
+                        stream.filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".java"))
+                                .map(p -> p.toAbsolutePath().toString())
+                                .toArray(String[]::new);
+            }
+            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+            if (files.length > 0) {
+                compiler.run(null, null, null, files);
+            }
+        } catch (Throwable e) {
+            logger.warn("Failed to compile bundled java file", e);
         }
     }
 }

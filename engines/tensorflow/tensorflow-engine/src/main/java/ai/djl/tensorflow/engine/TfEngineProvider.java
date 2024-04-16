@@ -36,8 +36,10 @@ public class TfEngineProvider implements EngineProvider {
     @Override
     public Engine getEngine() {
         if (engine == null) {
-            synchronized (this) {
-                engine = TfEngine.newInstance();
+            synchronized (TfEngineProvider.class) {
+                if (engine == null) {
+                    engine = TfEngine.newInstance();
+                }
             }
         }
         return engine;

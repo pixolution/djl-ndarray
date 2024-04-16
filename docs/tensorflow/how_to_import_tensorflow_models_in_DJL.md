@@ -54,18 +54,21 @@ Please refer to these two examples:
 
 ## How to import TensorFlow models that use [TensorFlow Extensions](https://www.tensorflow.org/resources/libraries-extensions)
 
-You can use DJL to run TensorFlow models that require ops available in TensorFlow extensions (not in core), such as models that use ops in  [TensorFlow Text](https://www.tensorflow.org/text).
+You can use DJL to run TensorFlow models that require ops available in TensorFlow extensions
+(not in core), such as models that use ops in [TensorFlow Text](https://www.tensorflow.org/text).
 
 To use such models in DJL you must know:
-* Which extension contains the additional required ops
-* The TensorFlow extension library version that is compatible with the version of Tensorflow currently being used in DJL
 
-Here we show an example that uses DJL to run the [Multilingual Universal Sentence Encoder](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3). 
+- Which extension contains the additional required ops
+- The TensorFlow extension library version that is compatible with the version of Tensorflow currently being used in DJL
+
+Here we show an example that uses DJL to run the [Multilingual Universal Sentence Encoder](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3).
 This is a text encoder from tensorflow hub that uses ops from the TensorFlow Text extension.
-* You need to download the library files for the extension so that we can load them for use. [Here](https://github.com/tensorflow/text#install-using-pip) are instructions for downloading TensorFlow text. We'll use version `2.7.0` in this example.
-* After the library files are downloaded, you are ready to load them for use in DJL. You do this by using
-TensorFlow Java `loadLibrary(...)` API before loading the model in DJL. 
-* We can update the existing [UniversalSentenceEncoder](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/UniversalSentenceEncoder.java) example to use the Multilingual model:
+
+- You need to download the library files for the extension so that we can load them for use. [Here](https://github.com/tensorflow/text#install-using-pip) are instructions for downloading TensorFlow text. We'll use version `2.7.0` in this example.
+- After the library files are downloaded, you are ready to load them for use in DJL. You do this by using
+TensorFlow Java `TensorFlow.loadLibrary(...)` API before loading the model in DJL. 
+- We can update the existing [UniversalSentenceEncoder](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/UniversalSentenceEncoder.java) example to use the Multilingual model:
 
 ```java
 // Build Criteria for Multilingual Universal Sentence Encoder from TensorFlow Hub
@@ -80,10 +83,12 @@ Criteria<String[], float[][]> criteria =
         .optProgress(new ProgressBar())
         .build();
 
+// Make sure TensorFlow engine is loaded before loading extension
+Engine.getEngine("TensorFlow");
 // Load TensorFlow Text libraries for necessary ops
 // Example Path of installation on Linux may look like: /home/<user>/.local/python-3.8.3/lib/python3.8/site-packages/tensorflow_text/
 TensorFlow.loadLibrary("<path_to_library_installation>/python/ops/_sentencepiece_tokenizer.so");
-        
+
 // Run the model
 try (ZooModel<String[], float[][]> model = criteria.loadModel();
     Predictor<String[], float[][]> predictor = model.newPredictor()) {

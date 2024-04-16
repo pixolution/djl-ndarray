@@ -13,6 +13,9 @@
 package ai.djl.util;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -23,6 +26,8 @@ import java.util.Properties;
  * The platform contains information regarding the version, os, and build flavor of the native code.
  */
 public final class Platform {
+
+    private static final Logger logger = LoggerFactory.getLogger(Platform.class);
 
     private String version;
     private String apiVersion;
@@ -73,10 +78,14 @@ public final class Platform {
             if (platform.isPlaceholder()) {
                 placeholder = platform;
             } else if (platform.matches(systemPlatform)) {
+                logger.info("Found matching platform from: {}", url);
                 return platform;
+            } else {
+                logger.info("Ignore mismatching platform from: {}", url);
             }
         }
         if (placeholder != null) {
+            logger.info("Found placeholder platform from: {}", placeholder);
             return placeholder;
         }
 
@@ -281,15 +290,19 @@ public final class Platform {
         if (!osPrefix.equals(system.osPrefix) || !osArch.equals(system.osArch)) {
             return false;
         }
-        // if system Machine is GPU
-        if (system.flavor.startsWith("cu")) {
-            // system flavor doesn't contain mkl, but MXNet has: cu110mkl
-            return flavor.startsWith("cpu")
-                    || "mkl".equals(flavor)
-                    || Integer.parseInt(flavor.substring(2, 5))
-                            <= Integer.parseInt(system.flavor.substring(2, 5));
+        if (flavor.startsWith("cpu") || "mkl".equals(flavor)) {
+            // CPU package can run on all system platform
+            return true;
         }
-        return flavor.startsWith("cpu") || "mkl".equals(flavor);
+
+        // native package can run on system which CUDA version is greater or equal
+        if (system.flavor.startsWith("cu")
+                && Integer.parseInt(flavor.substring(2, 5))
+                        <= Integer.parseInt(system.flavor.substring(2, 5))) {
+            return true;
+        }
+        logger.warn("The bundled library: " + this + " doesn't match system: " + system);
+        return false;
     }
 
     /** {@inheritDoc} */

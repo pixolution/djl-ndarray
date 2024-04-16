@@ -15,11 +15,15 @@ package ai.djl.repository;
 import ai.djl.repository.zoo.ModelLoader;
 import ai.djl.repository.zoo.ModelZoo;
 import ai.djl.util.ClassLoaderUtils;
+import ai.djl.util.JsonUtils;
+
+import com.google.gson.JsonParseException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -140,7 +144,6 @@ class RepositoryFactoryImpl implements RepositoryFactory {
         @Override
         public Repository newInstance(String name, URI uri) {
             String p = uri.getPath();
-            String queryString = uri.getRawQuery();
             if (p.startsWith("/")) {
                 p = p.substring(1);
             }
@@ -148,20 +151,22 @@ class RepositoryFactoryImpl implements RepositoryFactory {
             if (u == null) {
                 throw new IllegalArgumentException("Resource not found: " + uri);
             }
+
+            URI realUri;
             try {
-                uri = u.toURI();
+                // resolve real uri: jar:file:/path/my_lib.jar!/model.zip
+                realUri = u.toURI();
             } catch (URISyntaxException e) {
                 throw new IllegalArgumentException("Resource not found: " + uri, e);
             }
 
-            Path path = Paths.get(parseFilePath(uri));
+            Path path = Paths.get(parseFilePath(realUri));
             String fileName = path.toFile().getName();
-            if (!FilenameUtils.isArchiveFile(fileName)) {
-                throw new IllegalArgumentException("Only archive file is supported for res URL.");
+            if (FilenameUtils.isArchiveFile(fileName)) {
+                fileName = FilenameUtils.getNamePart(fileName);
             }
 
-            fileName = FilenameUtils.getNamePart(fileName);
-            return new JarRepository(name, uri, fileName, queryString);
+            return new JarRepository(name, uri, fileName, realUri);
         }
 
         /** {@inheritDoc} */
@@ -179,12 +184,7 @@ class RepositoryFactoryImpl implements RepositoryFactory {
             Path path = Paths.get(parseFilePath(uri));
             if (Files.exists(path) && Files.isDirectory(path)) {
                 try {
-                    if (Files.walk(path)
-                            .anyMatch(
-                                    f ->
-                                            f.endsWith("metadata.json")
-                                                    && Files.isRegularFile(f)
-                                                    && !f.getParent().equals(path))) {
+                    if (Files.walk(path).anyMatch(f -> isLocalRepository(path, f))) {
                         logger.debug("Found local repository: {}", path);
                         return new LocalRepository(name, path.toUri(), path);
                     }
@@ -193,6 +193,22 @@ class RepositoryFactoryImpl implements RepositoryFactory {
                 }
             }
             return new SimpleRepository(name, uri, path);
+        }
+
+        private boolean isLocalRepository(Path root, Path file) {
+            if (!Files.isRegularFile(file) || root.equals(file.getParent())) {
+                return false;
+            }
+            if (!"metadata.json".equals(file.toFile().getName())) {
+                return false;
+            }
+            try (Reader reader = Files.newBufferedReader(file)) {
+                Metadata metadata = JsonUtils.GSON.fromJson(reader, Metadata.class);
+                return metadata.getMetadataVersion() != null && metadata.getArtifacts() != null;
+            } catch (IOException | JsonParseException e) {
+                logger.warn("Invalid metadata.json file", e);
+            }
+            return false;
         }
 
         /** {@inheritDoc} */
@@ -238,14 +254,12 @@ class RepositoryFactoryImpl implements RepositoryFactory {
 
             ModelZoo zoo = ModelZoo.getModelZoo(groupId);
             if (zoo == null) {
-                logger.warn("ModelZoo not found: {}", groupId);
-                return repo;
+                throw new IllegalArgumentException("ModelZoo not found in classpath: " + groupId);
             }
 
             ModelLoader loader = zoo.getModelLoader(artifactId);
             if (loader == null) {
-                logger.warn("Artifact not found: {}/{}", groupId, artifactId);
-                return repo;
+                throw new IllegalArgumentException("Invalid djl URL: " + uri);
             }
 
             MRL mrl =

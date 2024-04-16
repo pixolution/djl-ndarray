@@ -890,6 +890,13 @@ public class MxNDArray extends NativeResource<Pointer> implements LazyNDArray {
 
     /** {@inheritDoc} */
     @Override
+    public NDArray atan2(NDArray other) {
+        other = manager.from(other);
+        return manager.invoke("_npi_arctan2", new NDArray[] {this, other}, null);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public NDArray sinh() {
         return manager.invoke("_npi_sinh", this, null);
     }
@@ -1150,6 +1157,18 @@ public class MxNDArray extends NativeResource<Pointer> implements LazyNDArray {
             NDArray window,
             boolean normalize,
             boolean returnComplex) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray fft2(long[] sizes, long[] axes) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray ifft2(long[] sizes, long[] axes) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -1542,6 +1561,12 @@ public class MxNDArray extends NativeResource<Pointer> implements LazyNDArray {
 
     /** {@inheritDoc} */
     @Override
+    public NDList topK(int k, int axis, boolean largest, boolean sorted) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public NDArray argMin() {
         if (isEmpty()) {
             throw new IllegalArgumentException("attempt to get argMin of an empty NDArray");
@@ -1593,6 +1618,12 @@ public class MxNDArray extends NativeResource<Pointer> implements LazyNDArray {
     @Override
     public NDArray erfinv() {
         return manager.invoke("erfinv", this, null);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public NDArray erf() {
+        return manager.invoke("erf", this, null);
     }
 
     /** {@inheritDoc} */

@@ -67,6 +67,7 @@ public class PtSymbolBlock extends AbstractSymbolBlock implements AutoCloseable 
      * @param manager the manager to use for the block
      * @param handle the module handle
      */
+    @SuppressWarnings("this-escape")
     public PtSymbolBlock(PtNDManager manager, long handle) {
         this(manager);
         this.handle = new AtomicReference<>(handle);
@@ -135,7 +136,7 @@ public class PtSymbolBlock extends AbstractSymbolBlock implements AutoCloseable 
             JniUtils.setGraphExecutorOptimize(setOptimizer);
         }
         if (first) {
-            synchronized (PtSymbolBlock.class) {
+            synchronized (this) {
                 if (first) {
                     inputDescriptions = new PairList<>();
                     outputDescriptions = new PairList<>();
