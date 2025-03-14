@@ -24,6 +24,10 @@ allprojects {
             // inheritOutputDirs = true
         }
     }
+    
+    tasks.withType(AbstractCopyTask) {
+        duplicatesStrategy = 'exclude'
+    }
 }
 
 def javaProjects() {

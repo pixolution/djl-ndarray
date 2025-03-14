@@ -13,15 +13,12 @@
 
 package ai.djl.tensorflow.engine.javacpp;
 
-import ai.djl.Device;
-import ai.djl.engine.EngineException;
-import ai.djl.ndarray.types.DataType;
-import ai.djl.ndarray.types.Shape;
-import ai.djl.tensorflow.engine.SavedModelBundle;
-import ai.djl.tensorflow.engine.TfDataType;
-import ai.djl.util.Pair;
-
-import com.google.protobuf.InvalidProtocolBufferException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Loader;
@@ -46,17 +43,20 @@ import org.tensorflow.internal.c_api.TF_Status;
 import org.tensorflow.internal.c_api.TF_TString;
 import org.tensorflow.internal.c_api.TF_Tensor;
 import org.tensorflow.internal.c_api.global.tensorflow;
-import org.tensorflow.proto.framework.ConfigProto;
-import org.tensorflow.proto.framework.GPUOptions;
-import org.tensorflow.proto.framework.MetaGraphDef;
-import org.tensorflow.proto.framework.RunOptions;
+import org.tensorflow.proto.ConfigProto;
+import org.tensorflow.proto.GPUOptions;
+import org.tensorflow.proto.MetaGraphDef;
+import org.tensorflow.proto.RunOptions;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.protobuf.InvalidProtocolBufferException;
+
+import ai.djl.Device;
+import ai.djl.engine.EngineException;
+import ai.djl.ndarray.types.DataType;
+import ai.djl.ndarray.types.Shape;
+import ai.djl.tensorflow.engine.SavedModelBundle;
+import ai.djl.tensorflow.engine.TfDataType;
+import ai.djl.util.Pair;
 
 /** A class containing utilities to interact with the TensorFlow Engine's Javacpp layer. */
 public final class JavacppUtils {

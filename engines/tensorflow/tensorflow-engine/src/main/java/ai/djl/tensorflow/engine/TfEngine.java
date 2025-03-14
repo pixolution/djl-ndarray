@@ -12,6 +12,16 @@
  */
 package ai.djl.tensorflow.engine;
 
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.bytedeco.javacpp.PointerScope;
+import org.tensorflow.TensorFlow;
+import org.tensorflow.internal.c_api.TFE_Context;
+import org.tensorflow.internal.c_api.TF_DeviceList;
+import org.tensorflow.internal.c_api.TF_Status;
+import org.tensorflow.internal.c_api.global.tensorflow;
+
 import ai.djl.Device;
 import ai.djl.Model;
 import ai.djl.engine.Engine;
@@ -21,16 +31,6 @@ import ai.djl.ndarray.NDManager;
 import ai.djl.nn.SymbolBlock;
 import ai.djl.tensorflow.engine.javacpp.JavacppUtils;
 import ai.djl.tensorflow.engine.javacpp.LibUtils;
-
-import org.bytedeco.javacpp.PointerScope;
-import org.tensorflow.TensorFlow;
-import org.tensorflow.internal.c_api.TFE_Context;
-import org.tensorflow.internal.c_api.TF_DeviceList;
-import org.tensorflow.internal.c_api.TF_Status;
-import org.tensorflow.internal.c_api.global.tensorflow;
-
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The {@code TfEngine} is an implementation of the {@link Engine} based on the <a

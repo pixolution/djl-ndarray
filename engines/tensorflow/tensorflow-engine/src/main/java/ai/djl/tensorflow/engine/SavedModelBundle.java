@@ -13,19 +13,19 @@
 
 package ai.djl.tensorflow.engine;
 
-import org.tensorflow.internal.c_api.TF_Graph;
-import org.tensorflow.internal.c_api.TF_Operation;
-import org.tensorflow.internal.c_api.TF_Session;
-import org.tensorflow.internal.c_api.global.tensorflow;
-import org.tensorflow.proto.framework.CollectionDef;
-import org.tensorflow.proto.framework.MetaGraphDef;
-import org.tensorflow.proto.framework.SignatureDef;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.tensorflow.internal.c_api.TF_Graph;
+import org.tensorflow.internal.c_api.TF_Operation;
+import org.tensorflow.internal.c_api.TF_Session;
+import org.tensorflow.internal.c_api.global.tensorflow;
+import org.tensorflow.proto.CollectionDef;
+import org.tensorflow.proto.MetaGraphDef;
+import org.tensorflow.proto.SignatureDef;
 
 /** The wrapper class for native resources required for SavedModelBundle. */
 public class SavedModelBundle implements AutoCloseable {

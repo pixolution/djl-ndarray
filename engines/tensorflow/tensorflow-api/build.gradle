@@ -3,11 +3,16 @@ group "ai.djl.tensorflow"
 configurations {
     exclusion
 }
+repositories {
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
 
 dependencies {
     api "org.bytedeco:javacpp:${javacpp_version}"
     api "com.google.protobuf:protobuf-java:${protobuf_version}"
-    api "org.tensorflow:tensorflow-core-api:0.5.0"
+	api 'org.tensorflow:tensorflow-core-platform:1.0.0-rc.1'
 
     exclusion "org.bytedeco:javacpp:${javacpp_version}"
     exclusion "com.google.protobuf:protobuf-java:${protobuf_version}"
