@@ -13,6 +13,25 @@
 
 package ai.djl.tensorflow.engine;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.bytedeco.javacpp.Pointer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tensorflow.internal.c_api.TF_Graph;
+import org.tensorflow.internal.c_api.TF_Operation;
+import org.tensorflow.internal.c_api.TF_Session;
+import org.tensorflow.internal.c_api.TF_Tensor;
+import org.tensorflow.proto.MetaGraphDef;
+import org.tensorflow.proto.SignatureDef;
+import org.tensorflow.proto.TensorInfo;
+import org.tensorflow.proto.TensorShapeProto;
+
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
@@ -25,25 +44,6 @@ import ai.djl.tensorflow.engine.javacpp.JavacppUtils;
 import ai.djl.training.ParameterStore;
 import ai.djl.util.Pair;
 import ai.djl.util.PairList;
-
-import org.bytedeco.javacpp.Pointer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tensorflow.internal.c_api.TF_Graph;
-import org.tensorflow.internal.c_api.TF_Operation;
-import org.tensorflow.internal.c_api.TF_Session;
-import org.tensorflow.internal.c_api.TF_Tensor;
-import org.tensorflow.proto.framework.MetaGraphDef;
-import org.tensorflow.proto.framework.SignatureDef;
-import org.tensorflow.proto.framework.TensorInfo;
-import org.tensorflow.proto.framework.TensorShapeProto;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /** {@code TfSymbolBlock} is the TensorFlow implementation of {@link SymbolBlock}. */
 public class TfSymbolBlock extends AbstractSymbolBlock implements AutoCloseable {
